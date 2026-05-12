@@ -1084,6 +1084,15 @@ function renderB(filter) {
 
   c.innerHTML = html || '<div style="text-align:center; padding:40px; color:var(--mu);">해당하는 혜택이 없네요.</div>';
 }
+  function getRewStatus(p, r) {
+  if (!p || !r) return 'locked';
+  var count = (p.records || []).length; // 현재 찍힌 도장 개수
+  
+  if (count < r.n) {
+    return 'locked'; // 도장 부족: 미달성
+  }
+  return r.used ? 'used' : 'ok'; // 도장 충족: 사용완료 혹은 사용가능
+}
 function toggleSection(id) {
   var el = document.getElementById(id);
   var showId = id.replace('toggle-', '');
