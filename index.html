@@ -480,7 +480,7 @@ function navigate(tab, btn) {
   stack = [tab];
   if (tab === 'home' || tab === 'show-home') { renderHome(); showSc('home'); }
   else if (tab === 'cal') { initCal(); showSc('cal'); }
-  else if (tab === 'benefit') { renderB('all'); showSc('benefit'); }
+  else if (tab === 'benefit') { ('all'); showSc('benefit'); }
 }
 
 function goBack() {
@@ -567,7 +567,7 @@ function archiveShow(id) {
   var s = getShow(id); if (!s) return;
   if (!confirm('"' + s.name + '"을 보관할까요?\n보관함에서 다시 확인할 수 있어요.')) return;
   s.archived = true;
-  save(); renderHome(); renderB('all');
+  save(); renderHome(); ('all');
 }
 
 function openArchive() {
@@ -1141,7 +1141,7 @@ function renderB(filter) {
             '<span style="font-size:15px; font-weight:800; color:var(--navy);">' + s.name + archiveLabel + '</span>' +
             '<span id="arrow-' + toggleId + '" style="color:var(--mu2); font-size:14px;">▸</span>' +
           '</div>' +
-          '<div id="' + toggleId + '" style="display:none; padding:10px; background:#f9f9f9; border-top:1px solid #eee;">' + 
+          '<div id="' + toggleId + '" class="hidden" style="padding:10px; background:#f9f9f9; border-top:1px solid #eee;">' + 
             rewardsHtml + 
           '</div>' +
         '</div>';
@@ -1150,36 +1150,14 @@ function renderB(filter) {
 
   c.innerHTML = html;
 }
-  // 데이터를 로컬스토리지에 저장하는 함수 (이게 없어서 에러가 났던 거예요!)
-function saveDB() {
-  localStorage.setItem('redoor_db', JSON.stringify(db));
-}
-
-// 혜택 사용하기 처리 함수 (안전 모드)
-function useReward(showId, padIdx, rewIdx) {
-  // 1. 해당 공연 찾기
-  var show = db.shows.find(function(s) { return s.id === showId; });
-  if (!show) return;
-
-  // 2. 해당 혜택 찾기 및 개수 업데이트
-  var pad = show.pads[padIdx];
-  if (pad && pad.rewards[rewIdx]) {
-    var r = pad.rewards[rewIdx];
-    
-    // 사용 가능한 개수 체크 (달성 개수 - 사용 개수)
-    var stampCount = (pad.records || []).length;
-    var totalEarned = (stampCount >= r.n) ? 1 : 0;
-    if (!r.usedCount) r.usedCount = 0;
-
-    if (totalEarned > r.usedCount) {
-      r.usedCount++; // 사용 처리
-      saveDB();      // 저장
-      renderB('all'); // 화면 갱신
-      alert('혜택을 사용했습니다!');
-    } else {
-      alert('사용 가능한 혜택이 없습니다.');
-    }
-  }
+  function toggleSection(id) {
+  var el = document.getElementById(id);
+  var sid = id.replace('toggle-', '');
+  var arrow = document.getElementById('arrow-' + sid);
+  if (!el) return;
+  var isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  if (arrow) arrow.textContent = isHidden ? '▾' : '▸';
 }
 
 // 직접 입력 혜택 사용 처리
@@ -1199,15 +1177,6 @@ function useManualReward(idx) {
     return 'locked'; // 도장 부족: 미달성
   }
   return r.used ? 'used' : 'ok'; // 도장 충족: 사용완료 혹은 사용가능
-}
-function toggleSection(id) {
-  var el = document.getElementById(id);
-  var sid = id.replace('toggle-', '');
-  var arrow = document.getElementById('arrow-' + sid);
-  if (!el) return;
-  var isHidden = el.style.display === 'none';
-  el.style.display = isHidden ? 'block' : 'none';
-  if (arrow) arrow.textContent = isHidden ? '▾' : '▸';
 }
 function useReward(showId, padIdx, rewIdx) {
   var show = db.shows.find(function(s) { return s.id === showId; });
