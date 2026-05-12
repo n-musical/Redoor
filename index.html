@@ -1024,64 +1024,69 @@ function renderB(filter) {
   var c = document.getElementById('b-list'), html = '';
   if (!c) return;
 
-  // 1. 보관되지 않은 공연들만 보여주기
+  // 1. 보관 안 된 공연만 필터링
   var activeShows = db.shows.filter(function(s) { return !s.isArchived; });
 
   if (activeShows.length === 0) {
-    html = '<div style="text-align:center; padding:40px 20px; color:var(--mu); font-size:14px;">표시할 공연이 없습니다.</div>';
-    c.innerHTML = html;
+    c.innerHTML = '<div style="text-align:center; padding:40px 20px; color:var(--mu); font-size:14px;">표시할 공연이 없습니다.</div>';
     return;
   }
 
   activeShows.forEach(function(s) {
     var toggleId = 'toggle-' + s.id;
-    
-    // [제목 상자] 클릭하면 토글되는 부분
-    html += '<div style="margin:0 20px 6px;">' +
-              '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg); border-radius:12px; cursor:pointer;">' +
-                '<span style="font-size:13px; font-weight:700; color:var(--navy);">' + s.name + '</span>' +
-                '<div style="display:flex; align-items:center; gap:8px;">' +
-                  '<div style="display:flex; flex-direction:column; gap:2px;">' +
-                    '<button onclick="event.stopPropagation();archiveShow(\'' + s.id + '\')" style="font-size:8px; padding:2px 5px; border-radius:4px; background:white; color:var(--mu); border:1px solid var(--brd); cursor:pointer;">보관</button>' +
-                    '<button onclick="event.stopPropagation();deleteShow(\'' + s.id + '\')" style="font-size:8px; padding:2px 5px; border-radius:4px; background:#fdeaea; color:#c0392b; border:none; cursor:pointer;">삭제</button>' +
-                  '</div>' +
-                  '<span id="arrow-' + s.id + '" style="color:var(--mu2); font-size:12px;">▾</span>' +
-                '</div>' +
-              '</div>';
+    var showRewardsHtml = ''; // 이 공연의 혜택들을 임시로 담을 곳
 
-    // [혜택 주머니 시작] 이 안에 내용이 들어가야 숨겨집니다!
-    html += '<div id="' + toggleId + '" style="display:block; margin-top:6px;">';
-
-    // 해당 공연의 모든 도장판을 돌며 혜택 찾기
-    s.pads.forEach(function(p) {
-      p.rewards.forEach(function(r) {
-        var status = getRewStatus(p, r); // 혜택 상태 체크 함수 (기존 것 활용)
+    // 2. 도장판 혜택 모으기
+    (s.pads || []).forEach(function(p) {
+      (p.rewards || []).forEach(function(r) {
+        var status = getRewStatus(p, r);
         if (filter === 'all' || status === filter) {
-          // 혜택 아이템 디자인 (사용자님 기존 디자인에 맞춤)
-          html += '<div class="bcard" style="margin:0 0 8px 0 !important;">' + 
-                    '<div style="font-size:12px; color:var(--mu);">' + p.emoji + ' ' + p.total + '칸 판</div>' +
-                    '<div style="font-size:14px; font-weight:700; color:var(--tx); margin:2px 0;">' + r.label + '</div>' +
-                  '</div>';
+          showRewardsHtml += 
+            '<div class="bcard" style="margin: 0 0 8px 0 !important; padding: 12px !important;">' +
+              '<div style="font-size:11px; color:var(--mu); margin-bottom:2px;">' + (p.emoji || '🎫') + ' ' + (p.total || 0) + '칸 판</div>' +
+              '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (r.label || '혜택 명칭 없음') + '</div>' +
+            '</div>';
         }
       });
     });
 
-    // 직접 입력한 혜택(manualB)도 이 주머니 안에 넣기
-    db.manualB.filter(function(m) { return m.sid === s.id; }).forEach(function(m) {
-       if (filter === 'all' || (m.used && filter === 'used') || (!m.used && filter === 'ok')) {
-         html += '<div class="bcard" style="margin:0 0 8px 0 !important;">' +
-                   '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + m.name + '</div>' +
-                 '</div>';
-       }
+    // 3. 직접 입력한 혜택(manualB) 모으기
+    var myManuals = (db.manualB || []).filter(function(m) { return m.sid === s.id; });
+    myManuals.forEach(function(m) {
+      var mStatus = m.used ? 'used' : 'ok';
+      if (filter === 'all' || mStatus === filter) {
+        showRewardsHtml += 
+          '<div class="bcard" style="margin: 0 0 8px 0 !important; padding: 12px !important;">' +
+            '<div style="font-size:11px; color:var(--purple); margin-bottom:2px;">직접 입력</div>' +
+            '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (m.name || '제목 없음') + '</div>' +
+          '</div>';
+      }
     });
 
-    // [중요] 여기서 주머니와 전체 감싸는 div를 닫습니다.
-    html += '</div></div>'; 
+    // 4. 내용이 있을 때만 공연 섹션 그리기
+    if (showRewardsHtml !== '') {
+      html += '<div style="margin:0 20px 10px;">' +
+                // 제목 줄
+                '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg); border-radius:12px; cursor:pointer;">' +
+                  '<span style="font-size:13px; font-weight:700; color:var(--navy);">' + s.name + '</span>' +
+                  '<div style="display:flex; align-items:center; gap:8px;">' +
+                    '<div style="display:flex; flex-direction:column; gap:2px;">' +
+                      '<button onclick="event.stopPropagation();archiveShow(\'' + s.id + '\')" style="font-size:8px; padding:2px 5px; border-radius:4px; background:white; color:var(--mu); border:1px solid var(--brd);">보관</button>' +
+                      '<button onclick="event.stopPropagation();deleteShow(\'' + s.id + '\')" style="font-size:8px; padding:2px 5px; border-radius:4px; background:#fdeaea; color:#c0392b; border:none;">삭제</button>' +
+                    '</div>' +
+                    '<span id="arrow-' + s.id + '" style="color:var(--mu2); font-size:12px;">▾</span>' +
+                  '</div>' +
+                '</div>' +
+                // 혜택 주머니 (여기 안에 내용이 들어감)
+                '<div id="' + toggleId + '" style="display:block; margin-top:8px;">' + 
+                  showRewardsHtml + 
+                '</div>' +
+              '</div>';
+    }
   });
 
-  c.innerHTML = html;
+  c.innerHTML = html || '<div style="text-align:center; padding:40px 20px; color:var(--mu); font-size:14px;">해당하는 혜택이 없어요.</div>';
 }
-  // 혜택의 상태(미달성/사용가능/사용완료)를 계산하는 함수
 function getRewStatus(p, r) {
   var count = (p.records || []).length; // 현재 찍힌 도장 개수
   
