@@ -673,12 +673,12 @@ function renderShowSc() {
 function goShow(id) {
   var s = db.shows.find(function(x) { return x.id === id; });
   if (!s) return;
-
-  // 보관된 공연이라도 상세 페이지(sc-show)는 보여줘야 합니다.
-  curSid = id; // 현재 보고 있는 공연 ID 설정
-  renderShowSc(); // 상세 페이지 그리기 함수 호출
-  navigate('sc-show'); // 상세 페이지로 이동
+  curShow = id;            // ✅ curSid → curShow 로 수정
+  stack.push('show');      // ✅ 뒤로가기를 위해 스택에 추가
+  renderShowSc();
+  showSc('show');          // ✅ navigate() 대신 showSc() 직접 호출
 }
+
 // ════════════════════════════════════════
 // 도장판 추가 / 수정
 // ════════════════════════════════════════
