@@ -1111,16 +1111,16 @@ function renderB(filter) {
                 '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (r.label || '혜택 명칭 없음') + '</div>' +
                '<div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0;">' +
 '<div style="text-align:center;">' +
-'<div style="font-size:32px;font-weight:800;color:var(--gn);">' + avail + '</div>' +
+'<div style="font-size:32px;font-weight:800;color:var(--gn);">' + available + '</div>' +
 '<div style="font-size:11px;color:var(--mu);">미사용</div>' +
 '</div>' +
 '<div style="font-size:24px;color:var(--mu2);">→</div>' +
 '<div style="text-align:center;">' +
-'<div style="font-size:32px;font-weight:800;color:var(--mu);">' + b.used + '</div>' +
+'<div style="font-size:32px;font-weight:800;color:var(--mu);">' + (r.usedCount || 0) + '</div>' +
 '<div style="font-size:11px;color:var(--mu);">사용 완료</div>' +
 '</div>' +
 '<div>' +
-'<button class="actbtn" style="width:auto;padding:10px 20px;"' + (avail <= 0 ? ' disabled' : '') + ' onclick="useMergedBenefit(\'' + s.id + '\',\'' + b.label + '\')">사용</button>' +
+'<button class="actbtn" style="width:auto;padding:10px 20px;"' + (available <= 0 ? ' disabled' : '') + ' onclick="useMergedBenefit(\'' + s.id + '\',\'' + b.label + '\')">사용</button>' +
 '</div>' +
 '</div><div>' +
                 (available > 0 && !isLocked ? 
