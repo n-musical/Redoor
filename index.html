@@ -1032,7 +1032,7 @@ function renderB(filter) {
             '<div style="font-size:11px;color:var(--mu);">누적 ' + b.total + '개</div></div>' +
             '<div class="cntrow"><div class="cntbox cok"><div class="n">' + avail + '</div><div class="l">미사용</div></div>' +
             '<div class="cntbox cno"><div class="n">' + b.used + '</div><div class="l">사용 완료</div></div></div>' +
-            '<button class="actbtn"' + (avail <= 0 ? ' disabled' : '') + ' onclick="useMergedBenefit(\'' + sid + '\',\'' + b.label + '\')">사용하기</button></div>';
+            '<button class="actbtn"' + (avail <= 0 ? ' disabled' : '') + ' onclick="useMergedBenefit(\'' + s.id + '\',\'' + b.label + '\')">사용하기</button></div>';
         }
       });
       html += '</div></div>';
