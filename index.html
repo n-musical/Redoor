@@ -516,6 +516,49 @@ function renderHome() {
     '<button onclick="openArchive()" style="width:100%;padding:8px;background:none;border:1px solid var(--brd);border-radius:8px;color:var(--mu);font-size:11px;cursor:pointer;">📦 보관함 보기</button>' +
     '</div>';
   c.innerHTML = html;
+  renderTodayBanner();
+}
+
+function renderTodayBanner() {
+  var banner = document.getElementById('home-banner');
+  var txt = document.getElementById('banner-txt');
+
+  if (!banner || !txt) return;
+
+  var td = today();
+
+  var todayShows = [];
+
+  db.shows.forEach(function(s) {
+    (s.pads || []).forEach(function(p) {
+      (p.records || []).forEach(function(r) {
+
+        if (r.date === td) {
+
+          var label =
+            (r.time === 'night' ? '🌙 밤공' : '🌤 낮공') +
+            ' · ' + s.name;
+
+          if (!todayShows.includes(label)) {
+            todayShows.push(label);
+          }
+        }
+
+      });
+    });
+  });
+
+  if (!todayShows.length) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  banner.style.display = 'flex';
+
+  txt.innerHTML =
+    '오늘 ' +
+    todayShows.join('<br>') +
+    ' 관람이 있어요!';
 }
 
 function addShow() {
