@@ -1137,8 +1137,12 @@ function renderB(filter) {
 
 } // if문의 끝 (중괄호는 여기서 딱 한 번만 닫아야 합니다)
 
+// (이전 루프 내부 로직 생략...)
+
+    // 혜택 내용이 있을 경우에만 섹션을 추가
     if (rewardsHtml !== '') {
       var archiveLabel = s.isArchived ? '<span style="font-size:10px; color:#e74c3c; margin-left:5px;">[보관됨]</span>' : '';
+      
       html += 
         '<div style="margin: 0 20px 12px; border: 1px solid var(--brd); border-radius: 12px; overflow: hidden;">' +
           '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:#fff; cursor:pointer;">' +
@@ -1150,10 +1154,11 @@ function renderB(filter) {
           '</div>' +
         '</div>';
     }
-  });
+  }); // <--- 중요: 루프(forEach 등)를 닫는 괄호!
 
-  c.innerHTML = html;
-}
+  c.innerHTML = html; // 최종 결과 렌더링
+} // <--- 중요: 함수(function) 자체를 닫는 마지막 중괄호!
+                           
   function toggleSection(id) {
   var el = document.getElementById(id);
   var sid = id.replace('toggle-', '');
