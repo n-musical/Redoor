@@ -489,14 +489,7 @@ function renderHome() {
   var c = document.getElementById('home-list'), html = ''; 
   if (!c) return;
 
-  // 1. 새 공연 추가 버튼 (크기를 줄이고 여백 조정)
-  html += '<div style="margin: 10px 20px 15px;">' +
-            '<button onclick="openModal(\'m-add-show\')" style="width:100%; padding:10px; background:var(--navy); color:white; border:none; border-radius:10px; font-weight:600; font-size:13px; cursor:pointer;">' +
-              '+ 새 공연 추가' +
-            '</button>' +
-          '</div>';
-
-  // 2. 공연 목록
+  // 1. 진행 중인 공연 목록 (먼저 보여주기)
   var activeShows = db.shows.filter(function(s) { return !s.isArchived; });
 
   if (activeShows.length === 0) {
@@ -512,9 +505,16 @@ function renderHome() {
     });
   }
 
-  // 3. 지난 공연 보기 버튼 (더 작고 차분하게)
-  html += '<div style="margin: 15px 20px;">' +
-            '<button onclick="renderArchive()" style="width:100%; padding:8px; background:none; border:1px solid var(--brd); border-radius:8px; color:var(--mu); font-size:12px; cursor:pointer;">' +
+  // 2. 새 공연 추가 버튼 (목록 아래로 이동)
+  html += '<div style="margin: 10px 20px 8px;">' +
+            '<button onclick="openModal(\'m-add-show\')" style="width:100%; padding:10px; background:var(--navy); color:white; border:none; border-radius:10px; font-weight:600; font-size:13px; cursor:pointer;">' +
+              '+ 새 공연 추가' +
+            '</button>' +
+          '</div>';
+
+  // 3. 지난 공연 보기 버튼 (맨 아래 유지)
+  html += '<div style="margin: 0 20px 20px;">' +
+            '<button onclick="renderArchive()" style="width:100%; padding:8px; background:none; border:1px solid var(--brd); border-radius:8px; color:var(--mu); font-size:11px; cursor:pointer;">' +
               '📜 지난 공연 보관함' +
             '</button>' +
           '</div>';
