@@ -475,13 +475,30 @@ function showSc(id) {
 }
 
 function navigate(tab, btn) {
-  document.querySelectorAll('.ni').forEach(function(b) { b.classList.remove('on'); });
-  btn.classList.add('on');
+  // 모든 버튼에서 on 클래스 제거
+  document.querySelectorAll('.ni').forEach(function(b) { 
+    b.classList.remove('on'); 
+  });
+
+  // 클릭된 버튼이 있을 때만 on 클래스 추가
+  if (btn) btn.classList.add('on');
+
   stack = [tab];
-  if (tab === 'home' || tab === 'show-home') { renderHome(); showSc('home'); }
-  else if (tab === 'cal') { initCal(); showSc('cal'); }
-  else if (tab === 'benefit') { ('all'); showSc('benefit'); }
+
+  if (tab === 'home' || tab === 'show-home') { 
+    renderHome(); 
+    showSc('home'); 
+  }
+  else if (tab === 'cal') { 
+    initCal(); 
+    showSc('cal'); 
+  }
+  else if (tab === 'benefit') { 
+    renderB('all');   // ← 원래 빠져 있던 함수 호출 추가
+    showSc('benefit'); 
+  }
 }
+
 
 function goBack() {
   stack.pop();
