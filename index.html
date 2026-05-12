@@ -1081,7 +1081,18 @@ function renderB(filter) {
 
   c.innerHTML = html;
 }
+  // 혜택의 상태(미달성/사용가능/사용완료)를 계산하는 함수
+function getRewStatus(p, r) {
+  var count = (p.records || []).length; // 현재 찍힌 도장 개수
   
+  if (count < r.n) {
+    return 'locked'; // 도장 개수가 부족하면 '미달성'
+  }
+  
+  // 도장 개수는 채웠는데, 이미 사용했는지 체크
+  // (r.used가 true면 'used', 아니면 'ok')
+  return r.used ? 'used' : 'ok';
+}
 function toggleSection(id) {
   var el = document.getElementById(id);
   var sid = id.replace('toggle-', '');
