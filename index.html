@@ -1027,76 +1027,77 @@ function renderB(filter) {
 
   var activeShows = (db.shows || []).filter(function(s) { return !s.isArchived; });
 
-  activeShows.forEach(function(s) {
+  activeShows.forEach(function(s, sIdx) {
     var toggleId = 'toggle-' + s.id;
     var rewardsHtml = '';
 
-    // [1] 도장판 혜택 (+ 상태 표시 배지)
-    (s.pads || []).forEach(function(p) {
-      (p.rewards || []).forEach(function(r) {
-        var count = (p.records || []).length;
-        var status = (count < r.n) ? 'locked' : (r.used ? 'used' : 'ok');
+    // [1] 도장판 혜택 계산 및 생성
+    (s.pads || []).forEach(function(p, pIdx) {
+      (p.rewards || []).forEach(function(r, rIdx) {
+        var stampCount = (p.records || []).length;
+        var totalEarned = (stampCount >= r.n) ? 1 : 0; // 달성 여부 (기본 1개)
+        var used = r.usedCount || 0; // 사용한 개수 (데이터에 없으면 0)
+        var available = totalEarned - used; // 사용 가능 개수
         
-        if (filter === 'all' || status === filter) {
-          // 상태에 따른 배지 디자인
-          var badgeHtml = '';
-          if (status === 'locked') {
-            badgeHtml = '<span style="font-size:10px; color:var(--mu2);">🔒 미달성 (' + count + '/' + r.n + ')</span>';
-          } else if (status === 'used') {
-            badgeHtml = '<span style="font-size:10px; padding:3px 6px; border-radius:4px; background:#f0f0f0; color:#888;">사용 완료</span>';
-          } else {
-            badgeHtml = '<span style="font-size:10px; padding:3px 6px; border-radius:4px; background:var(--navy); color:white; font-weight:bold;">사용 가능</span>';
-          }
+        var isLocked = stampCount < r.n;
+        var status = isLocked ? 'locked' : (available > 0 ? 'ok' : 'used');
 
+        if (filter === 'all' || status === filter) {
+          // 미달성 시 회색 처리 스타일
+          var lockStyle = isLocked ? 'filter: grayscale(1); opacity: 0.5;' : '';
+          
           rewardsHtml += 
-            '<div style="background:white; border:1px solid var(--brd); border-radius:8px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">' +
+            '<div style="background:white; border:1px solid var(--brd); border-radius:10px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; ' + lockStyle + '">' +
               '<div>' +
-                '<div style="font-size:11px; color:var(--mu); font-weight:600; margin-bottom:2px;">' + r.n + '회 혜택</div>' +
-                '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (r.label || '제목 없음') + '</div>' +
+                '<div style="font-size:11px; color:var(--mu); font-weight:600;">' + r.n + '회 혜택</div>' +
+                '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (r.label || '혜택 명칭 없음') + '</div>' +
+                '<div style="font-size:11px; color:var(--navy); margin-top:4px;">가능: ' + available + ' / 사용: ' + used + '</div>' +
               '</div>' +
-              '<div>' + badgeHtml + '</div>' + // 우측에 배지 추가
+              '<div>' +
+                (available > 0 && !isLocked ? 
+                  '<button onclick="useReward(\''+s.id+'\','+pIdx+','+rIdx+')" style="padding:6px 10px; background:var(--navy); color:white; border:none; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">사용하기</button>' : 
+                  '<button disabled style="padding:6px 10px; background:#eee; color:#aaa; border:none; border-radius:6px; font-size:11px;">' + (isLocked ? '미달성' : '완료') + '</button>') +
+              '</div>' +
             '</div>';
         }
       });
     });
 
-    // [2] 직접 입력 혜택 (+ 상태 표시 배지)
-    (db.manualB || []).filter(function(m) { return m.sid === s.id; }).forEach(function(m) {
-      var mStatus = m.used ? 'used' : 'ok';
-      if (filter === 'all' || mStatus === filter) {
-        var badgeHtml = mStatus === 'used' ? 
-          '<span style="font-size:10px; padding:3px 6px; border-radius:4px; background:#f0f0f0; color:#888;">사용 완료</span>' : 
-          '<span style="font-size:10px; padding:3px 6px; border-radius:4px; background:var(--purple); color:white; font-weight:bold;">사용 가능</span>';
+    // [2] 직접 입력 혜택 (manualB)
+    (db.manualB || []).filter(function(m) { return m.sid === s.id; }).forEach(function(m, mIdx) {
+      var available = m.used ? 0 : 1;
+      var used = m.used ? 1 : 0;
+      var status = m.used ? 'used' : 'ok';
 
+      if (filter === 'all' || status === filter) {
         rewardsHtml += 
-          '<div style="background:white; border:1px solid var(--brd); border-radius:8px; padding:12px; margin-bottom:8px; border-left:4px solid var(--purple); display:flex; justify-content:space-between; align-items:center;">' +
+          '<div style="background:white; border:1px solid var(--brd); border-radius:10px; padding:12px; margin-bottom:8px; border-left:4px solid var(--purple); display:flex; justify-content:space-between; align-items:center;">' +
             '<div>' +
-              '<div style="font-size:11px; color:var(--purple); font-weight:600; margin-bottom:2px;">직접 입력</div>' +
+              '<div style="font-size:11px; color:var(--purple); font-weight:600;">직접 입력</div>' +
               '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (m.name || '제목 없음') + '</div>' +
+              '<div style="font-size:11px; color:var(--purple); margin-top:4px;">가능: ' + available + ' / 사용: ' + used + '</div>' +
             '</div>' +
-            '<div>' + badgeHtml + '</div>' +
+            '<button onclick="useManualReward('+mIdx+')" ' + (m.used ? 'disabled' : '') + ' style="padding:6px 10px; background:' + (m.used ? '#eee' : 'var(--purple)') + '; color:' + (m.used ? '#aaa' : 'white') + '; border:none; border-radius:6px; font-size:11px;">' + (m.used ? '완료' : '사용하기') + '</button>' +
           '</div>';
       }
     });
 
-    // [3] 전체 껍데기 조립 (여기가 토글 탈출을 막는 핵심입니다!)
+    // [3] 토글 구조 조립 (제목 클릭 시 rewardsHtml이 들어있는 div가 통째로 display none/block 됨)
     if (rewardsHtml !== '') {
       html += 
-        '<div style="margin: 0 20px 12px; border: 1px solid var(--brd); border-radius: 12px; background: #fafafa; overflow: hidden;">' + // overflow: hidden으로 강제 가둠
-          // 탭 제목
-          '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; cursor:pointer; background:#fff; border-bottom: 1px solid #f0f0f0;">' +
-            '<span style="font-size:14px; font-weight:800; color:var(--navy);">' + s.name + '</span>' +
+        '<div style="margin: 0 20px 12px; border: 1px solid var(--brd); border-radius: 12px; overflow: hidden; background:#f9f9f9;">' +
+          '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:#fff; cursor:pointer; border-bottom:1px solid #eee;">' +
+            '<span style="font-size:15px; font-weight:800; color:var(--navy);">' + s.name + '</span>' +
             '<span id="arrow-' + s.id + '" style="color:var(--mu2); font-size:14px;">▾</span>' +
           '</div>' +
-          // 숨겨지는 혜택 내용 (기본값을 보이게 해두었습니다. 안으로 들어갔는지 확실히 확인하기 위함!)
-          '<div id="' + toggleId + '" style="display:block; padding: 10px 10px 2px 10px;">' + 
+          '<div id="' + toggleId + '" style="display:block; padding:12px 10px 4px 10px;">' + 
             rewardsHtml + 
           '</div>' +
         '</div>';
     }
   });
 
-  c.innerHTML = html || '<div style="text-align:center; padding:40px; color:var(--mu);">조건에 맞는 혜택이 없습니다.</div>';
+  c.innerHTML = html || '<div style="text-align:center; padding:50px; color:var(--mu);">해당하는 혜택이 없습니다.</div>';
 }
   function getRewStatus(p, r) {
   if (!p || !r) return 'locked';
@@ -1120,7 +1121,26 @@ function toggleSection(id) {
     if (arrow) arrow.textContent = '▸';
   }
 }
+function useReward(showId, padIdx, rewIdx) {
+  var show = db.shows.find(function(s) { return s.id === showId; });
+  if (show && show.pads[padIdx].rewards[rewIdx]) {
+    var r = show.pads[padIdx].rewards[rewIdx];
+    if (!r.usedCount) r.usedCount = 0;
+    r.usedCount++; // 사용 개수 증가
+    saveDB(); // 로컬스토리지 저장
+    renderB('all'); // 화면 새로고침
+    alert('혜택을 사용했습니다!');
+  }
+}
 
+function useManualReward(idx) {
+  if (db.manualB[idx]) {
+    db.manualB[idx].used = true;
+    saveDB();
+    renderB('all');
+    alert('혜택을 사용했습니다!');
+  }
+}
 function deleteShowFromBenefit(id) {
   var s = getShow(id); if (!s) return;
   if (!confirm('"' + s.name + '"을 삭제할까요?\n모든 도장판과 혜택 기록이 삭제됩니다.')) return;
