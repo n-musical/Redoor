@@ -486,33 +486,35 @@ function goBack() {
 // 홈
 // ════════════════════════════════════════
 function renderHome() {
-  // 1. html 변수 선언 (에러 방지)
-  var c = document.getElementById('h-list'), html = ''; 
+  // HTML 상의 실제 ID는 'home-list'입니다.
+  var c = document.getElementById('home-list'), html = ''; 
   if (!c) return;
 
-  // 2. 공연 추가 버튼 (이 코드가 있어야 추가가 가능합니다!)
-  html += '<div style="margin:20px;">' +
+  // 1. 공연 추가 버튼
+  html += '<div style="margin:10px 0 20px;">' +
             '<button onclick="openModal(\'m-add-show\')" style="width:100%; padding:15px; background:var(--navy); color:white; border:none; border-radius:12px; font-weight:700; font-size:15px; cursor:pointer;">' +
               '+ 새 공연 추가하기' +
             '</button>' +
           '</div>';
 
-  // 3. 공연 목록 그리기 (보관 안 된 것만)
+  // 2. 진행 중인 공연 목록 (보관되지 않은 것만)
   var activeShows = db.shows.filter(function(s) { return !s.isArchived; });
 
   if (activeShows.length === 0) {
     html += '<div style="text-align:center; padding:40px 20px; color:var(--mu); font-size:14px;">등록된 공연이 없어요.<br>새 공연을 추가해 보세요! 🎭</div>';
   } else {
     activeShows.forEach(function(s) {
-      // 사용자님의 기존 홈 화면 공연 카드 스타일을 여기에 맞게 넣어주세요
-      html += '<div class="show-card" onclick="viewShow(\'' + s.id + '\')" style="margin:0 20px 10px; padding:15px; background:white; border-radius:12px; border:1px solid var(--brd); cursor:pointer;">' +
-                '<div style="font-weight:700; color:var(--navy);">' + s.name + '</div>' +
+      html += '<div class="card" onclick="goShow(\'' + s.id + '\')">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                  '<div style="font-weight:700; color:var(--navy); font-size:16px;">' + s.name + '</div>' +
+                  '<div style="color:var(--mu); font-size:12px;">' + (s.genre || '뮤지컬') + ' 〉</div>' +
+                '</div>' +
               '</div>';
     });
   }
 
-  // 4. 지난 공연 보기 버튼 (맨 아래 배치)
-  html += '<div style="margin: 20px;">' +
+  // 3. 지난 공연 보기 버튼 (하단)
+  html += '<div style="margin-top: 10px;">' +
             '<button onclick="renderArchive()" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--brd); border-radius:12px; color:var(--mu); font-size:13px; font-weight:600; cursor:pointer;">' +
               '📜 지난 공연(보관함) 보기' +
             '</button>' +
@@ -568,40 +570,29 @@ function archiveShow(id) {
   renderB('all'); // 혜택 탭 새로고침
 }
  function renderArchive() {
-  // 홈 화면 영역인 h-list를 가져옵니다.
-  var c = document.getElementById('h-list'), html = '';
+  var c = document.getElementById('home-list'), html = '';
   if (!c) return;
 
   var archivedShows = db.shows.filter(function(s) { return s.isArchived === true; });
 
+  html += '<div style="padding:10px 0; font-weight:700; color:var(--navy); font-size:18px;">지난 공연 목록</div>';
+
   if (archivedShows.length === 0) {
-    html = '<div style="text-align:center; padding:40px 20px; color:var(--mu); font-size:14px;">보관된 공연이 없습니다.</div>';
+    html += '<div style="text-align:center; padding:40px 20px; color:var(--mu); font-size:14px;">보관된 공연이 없습니다.</div>';
   } else {
-    html += '<div style="padding:10px 20px; font-weight:700; color:var(--navy);">지난 공연 목록</div>';
     archivedShows.forEach(function(s) {
-      html += '<div style="margin:0 20px 8px; padding:12px 14px; background:white; border:1px solid var(--brd); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">' +
-                '<span style="font-size:13px; font-weight:600;">' + s.name + '</span>' +
-                '<button onclick="restoreShow(\'' + s.id + '\')" style="font-size:10px; padding:4px 8px; border-radius:6px; background:var(--navy); color:white; border:none;">꺼내기</button>' +
+      html += '<div class="card" style="display:flex; justify-content:space-between; align-items:center;">' +
+                '<span style="font-weight:600;">' + s.name + '</span>' +
+                '<button onclick="restoreShow(\'' + s.id + '\')" style="padding:6px 12px; border-radius:8px; background:var(--navy); color:white; border:none; font-size:11px; font-weight:600;">꺼내기</button>' +
               '</div>';
     });
   }
   
-  // 돌아가기 버튼이 다시 renderHome()을 부르도록 수정
-  html += '<div style="margin:20px; text-align:center;">' +
-            '<button onclick="renderHome()" style="color:var(--mu); background:none; border:none; text-decoration:underline; font-size:12px;">홈으로 돌아가기</button>' +
+  html += '<div style="margin-top:20px; text-align:center;">' +
+            '<button onclick="renderHome()" style="color:var(--mu); background:none; border:none; text-decoration:underline; font-size:13px; cursor:pointer;">돌아가기</button>' +
           '</div>';
 
   c.innerHTML = html;
-}
-  function restoreShow(id) {
-  var s = getShow(id);
-  if (!s) return;
-  
-  if (confirm('"' + s.name + '" 공연을 다시 활성화할까요?')) {
-    s.isArchived = false; // 보관 표시 해제
-    save();
-    renderArchive(); // 보관함 목록 새로고침
-  }
 }
 
 // ════════════════════════════════════════
@@ -1086,11 +1077,12 @@ db.shows.forEach(function(s) {
       html += '<div style="margin:0 20px 4px;">' +
         '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:12px;cursor:pointer;">' +
         '<span style="font-size:13px;font-weight:700;color:var(--navy);">' + s.name + '</span>' +
-      '<div style="display:flex;align-items:center;gap:8px;">' +
-  '<button onclick="event.stopPropagation();archiveShow(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--mu);border:none;cursor:pointer;font-family:inherit;font-weight:600;">보관</button>' +
-  '<button onclick="event.stopPropagation();deleteShowFromBenefit(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">삭제</button>' +
-  '<span id="arrow-' + s.id + '" style="color:var(--mu);font-size:14px;">▾</span>' +
-'</div></div>' +
+      // renderB 함수 내부의 버튼 생성 부분을 이 코드로 바꾸세요.
+'<div style="display:flex;align-items:center;gap:8px;">' +
+  '<button onclick="event.stopPropagation();archiveShow(\'' + s.id + '\')" style="font-size:10px;padding:4px 8px;border-radius:6px;background:var(--bg);color:var(--mu);border:1px solid var(--brd);cursor:pointer;font-weight:600;">보관</button>' +
+  '<button onclick="event.stopPropagation();deleteShow(\'' + s.id + '\')" style="font-size:10px;padding:4px 8px;border-radius:6px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-weight:600;">삭제</button>' +
+  '<span id="arrow-' + s.id + '" style="color:var(--mu);font-size:14px;margin-left:4px;">▾</span>' +
+'</div>' +
         '<div id="' + toggleId + '" style="display:block;">'; // 초기 상태 block 추가
 
       filtered.forEach(function(b) {
