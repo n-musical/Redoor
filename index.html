@@ -115,7 +115,7 @@ emoji-picker { width: 100%; height: 320px; border-radius: 14px; margin-bottom: 1
 /* 체크박스 라벨 */
 .ck { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--tx); margin-bottom: 14px; cursor: pointer; }
 /* 혜택탭 상단 여백 */
-#sc-benefit { padding-top: 0; }
+#sc-benefit { padding-top: 0; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -187,7 +187,7 @@ emoji-picker { width: 100%; height: 320px; border-radius: 14px; margin-bottom: 1
 
 <!-- 혜택 -->
 <div class="sc" id="sc-benefit">
-  <div class="tbar"><h2>혜택 관리</h2></div>
+<div class="tbar" style="position:sticky;top:0;z-index:10;"><h2>혜택 관리</h2></div>
   <div class="bfil">
     <button class="fb on" onclick="filterB('all',this)">전체</button>
     <button class="fb" onclick="filterB('ok',this)">사용 가능</button>
@@ -474,7 +474,8 @@ function renderHome() {
       '<div style="color:var(--purple);font-weight:700;">›</div></div>' +
       '<span class="tag">' + s.genre + '</span>' +
       '<div style="margin-top:8px;font-size:12px;color:var(--mu);">도장판 ' + s.pads.length + '개 · 진행 중 ' + active + '개</div>' +
-      '</div>';
+'<div style="margin-top:10px;"><button onclick="event.stopPropagation();deleteShow(\'' + s.id + '\')" style="width:100%;padding:7px;font-size:12px;border-radius:8px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">🗑 공연 삭제</button></div>' +
+'</div>';
   }).join('');
   var td = today(), found = null;
   db.shows.forEach(function(s) {
@@ -495,6 +496,14 @@ function addShow() {
   save(); closeModal('m-add-show');
   document.getElementById('i-sname').value = '';
   renderHome();
+}
+  function deleteShow(id) {
+  var s = getShow(id);
+  if (!s) return;
+  if (!confirm('"' + s.name + '"을 삭제할까요?\n모든 도장판과 혜택 기록이 삭제됩니다.')) return;
+  db.manualB = db.manualB.filter(function(b) { return b.sid !== id; });
+  db.shows = db.shows.filter(function(s) { return s.id !== id; });
+  save(); renderHome();
 }
 
 function goShow(id) { curShow = id; stack.push('show'); renderShowSc(); showSc('show'); }
@@ -957,13 +966,24 @@ function renderB(filter) {
       return true;
     });
     if (!filtered.length) return;
-    html += '<div class="bstit">' + s.name + '</div>';
+    var toggleId = 'toggle-' + s.id;
+    html += '<div style="margin:0 20px 4px;">' +
+      '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:12px;cursor:pointer;">' +
+      '<span style="font-size:13px;font-weight:700;color:var(--navy);">' + s.name + '</span>' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+      '<button onclick="event.stopPropagation();deleteShowFromBenefit(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">삭제</button>' +
+      '<span id="arrow-' + s.id + '" style="color:var(--mu);font-size:14px;">▾</span>' +
+      '</div></div>' +
+      '<div id="' + toggleId + '">';
     filtered.forEach(function(b) {
       if (b.isLocked) {
-        html += '<div class="blocked"><span style="font-weight:700;">' + b.label + '</span> <span style="color:var(--mu2);">· ' + b.need + '개 남음</span></div>';
+        html += '<div class="blocked" style="margin:4px 0 0;">' +
+          '<span style="font-weight:700;">' + b.label + '</span>' +
+          '<span style="color:var(--mu2);">· ' + b.need + '개 남음</span></div>';
       } else {
         var avail = b.total - b.used;
-        html += '<div class="bcard"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+        html += '<div class="bcard" style="margin:4px 0 0;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
           '<div style="font-size:14px;font-weight:700;color:var(--navy);">🎟 ' + b.label + '</div>' +
           '<div style="font-size:11px;color:var(--mu);">누적 ' + b.total + '개</div></div>' +
           '<div class="cntrow"><div class="cntbox cok"><div class="n">' + avail + '</div><div class="l">미사용</div></div>' +
@@ -971,9 +991,32 @@ function renderB(filter) {
           '<button class="actbtn"' + (avail <= 0 ? ' disabled' : '') + ' onclick="useMergedBenefit(\'' + s.id + '\',\'' + b.label + '\')">사용하기</button></div>';
       }
     });
+    html += '</div></div>';
   });
   if (!html) html = '<div style="text-align:center;padding:40px 20px;color:var(--mu);font-size:14px;">아직 혜택이 없어요<br>도장판을 채우면 자동으로 추가돼요 🎁</div>';
   c.innerHTML = html;
+}
+
+function toggleSection(id) {
+  var el = document.getElementById(id);
+  var sid = id.replace('toggle-', '');
+  var arrow = document.getElementById('arrow-' + sid);
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    arrow.textContent = '▾';
+  } else {
+    el.style.display = 'none';
+    arrow.textContent = '▸';
+  }
+}
+
+function deleteShowFromBenefit(id) {
+  var s = getShow(id); if (!s) return;
+  if (!confirm('"' + s.name + '"을 삭제할까요?\n모든 도장판과 혜택 기록이 삭제됩니다.')) return;
+  db.manualB = db.manualB.filter(function(b) { return b.sid !== id; });
+  db.shows = db.shows.filter(function(s) { return s.id !== id; });
+  save(); renderHome(); renderB('all');
+  document.querySelectorAll('.fb')[0].classList.add('on');
 }
 
 function filterB(filter, btn) {
