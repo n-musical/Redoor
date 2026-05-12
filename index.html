@@ -527,7 +527,7 @@ function renderHome() {
   html += '<div style="margin: 0 20px 20px;">' +
             '<button onclick="renderArchive()" style="width:100%; padding:8px; background:none; border:1px solid var(--brd); border-radius:8px; color:var(--mu); font-size:11px; cursor:pointer;">📜 지난 공연 보관함</button>' +
           '</div>';
-<div class="addcard" onclick="openArchive()" style="color:var(--purple);border-color:var(--pl);">📦 보관함 보기</div>
+html += '<div class="addcard" onclick="openArchive()" style="color:var(--purple);border-color:var(--pl);">📦 보관함 보기</div>'
   c.innerHTML = html;
 }
 function addShow() {
