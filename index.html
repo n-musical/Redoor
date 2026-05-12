@@ -397,6 +397,20 @@ var db = JSON.parse(localStorage.getItem('cc6') || 'null') || { shows: [], manua
 function save() { localStorage.setItem('cc6', JSON.stringify(db)); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 function getShow(id) { return db.shows.find(function(s){ return s.id === id; }); }
+function particle(word, type) {
+  var lastChar = word.charCodeAt(word.length - 1);
+  var hasBatchim = (lastChar - 44032) % 28 !== 0;
+
+  var particles = {
+    '을를': hasBatchim ? '을' : '를',
+    '이가': hasBatchim ? '이' : '가',
+    '은는': hasBatchim ? '은' : '는',
+    '와과': hasBatchim ? '과' : '와',
+    '으로로': hasBatchim ? '으로' : '로'
+  };
+
+  return word + particles[type];
+}
 
 var curShow = null, curPad = null;
 var stack = ['home'];
@@ -517,7 +531,10 @@ function addShow() {
 
 function deleteShow(id) {
   var s = getShow(id); if (!s) return;
-  if (!confirm('"' + s.name + '"을 삭제할까요?\n모든 도장판과 혜택 기록이 삭제됩니다.')) return;
+  if (!confirm(
+  particle('"' + s.name + '"', '을를') +
+  ' 삭제할까요?\n모든 도장판과 혜택 기록이 삭제됩니다.'
+)) return;
   db.manualB = db.manualB.filter(function(b) { return b.sid !== id; });
   db.shows = db.shows.filter(function(x) { return x.id !== id; });
   save(); renderHome();
@@ -525,7 +542,10 @@ function deleteShow(id) {
 
 function archiveShow(id) {
   var s = getShow(id); if (!s) return;
-  if (!confirm('"' + s.name + '"을 보관할까요?')) return;
+if (!confirm(
+  particle('"' + s.name + '"', '을를') +
+  ' 보관할까요?'
+)) return;
   s.archived = true;
   save(); renderHome();
 }
@@ -1152,7 +1172,10 @@ function usePadReward(sid, rewardLabel) {
 function useManualBById(id) {
   var b = db.manualB.find(function(x) { return x.id === id; });
   if (!b) return;
-  if (!confirm('"' + (b.label || b.name) + '"을 사용 처리할까요?')) return;
+  if (!confirm(
+  particle('"' + (b.label || b.name) + '"', '을를') +
+  ' 사용 처리할까요?'
+)) return;
   b.used = true;
   save(); renderB('all');
 }
