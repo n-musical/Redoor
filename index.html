@@ -539,9 +539,9 @@ function renderTodayBanner() {
             (r.time === 'night' ? '🌙 밤공' : '🌤 낮공') +
             ' · ' + s.name;
 
-          if (!todayShows.includes(label)) {
-            todayShows.push(label);
-          }
+          if (todayShows.indexOf(label) === -1) {
+  todayShows.push(label);
+}
         }
 
       });
