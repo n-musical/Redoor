@@ -521,13 +521,29 @@ function renderHome() {
   c.innerHTML = html;
 }
 function addShow() {
-  var name = document.getElementById('i-sname').value.trim();
-  var genre = document.getElementById('i-sgenre').value;
+  // 입력창 ID가 'i-sname'이 맞는지 꼭 확인하세요!
+  var nameEl = document.getElementById('i-sname');
+  var genreEl = document.getElementById('i-sgenre');
+  
+  if (!nameEl) return;
+  var name = nameEl.value.trim();
+  var genre = genreEl ? genreEl.value : '';
+
   if (!name) { alert('공연명을 입력해주세요'); return; }
-  db.shows.push({ id: uid(), name: name, genre: genre, pads: [] });
-  save(); closeModal('m-add-show');
-  document.getElementById('i-sname').value = '';
-  renderHome();
+
+  // 새 공연 객체 생성 (isArchived 추가)
+  db.shows.push({ 
+    id: uid(), 
+    name: name, 
+    genre: genre, 
+    pads: [], 
+    isArchived: false 
+  });
+
+  save(); 
+  closeModal('m-add-show');
+  nameEl.value = ''; // 입력창 비우기
+  renderHome(); // 홈 화면 새로고침
 }
   function deleteShow(id) {
   var s = getShow(id);
@@ -551,9 +567,11 @@ function archiveShow(id) {
   renderHome(); // 홈 새로고침
   renderB('all'); // 혜택 탭 새로고침
 }
-  function renderArchive() {
-  var c = document.getElementById('b-list'), html = '';
-  // 보관된 공연들만 필터링
+ function renderArchive() {
+  // 홈 화면 영역인 h-list를 가져옵니다.
+  var c = document.getElementById('h-list'), html = '';
+  if (!c) return;
+
   var archivedShows = db.shows.filter(function(s) { return s.isArchived === true; });
 
   if (archivedShows.length === 0) {
@@ -568,9 +586,9 @@ function archiveShow(id) {
     });
   }
   
-  // 뒤로가기 버튼 (다시 혜택 화면 등으로 돌아가기 위해)
+  // 돌아가기 버튼이 다시 renderHome()을 부르도록 수정
   html += '<div style="margin:20px; text-align:center;">' +
-            '<button onclick="renderB(\'all\')" style="color:var(--mu); background:none; border:none; text-decoration:underline; font-size:12px;">돌아가기</button>' +
+            '<button onclick="renderHome()" style="color:var(--mu); background:none; border:none; text-decoration:underline; font-size:12px;">홈으로 돌아가기</button>' +
           '</div>';
 
   c.innerHTML = html;
