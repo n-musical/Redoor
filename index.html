@@ -406,7 +406,7 @@ var COLORS = ['#4a3580','#1a4060','#5c2a10','#1f5040','#5c3a00','#3a1f60','#8b22
 // ════════════════════════════════════════
 // DB
 // ════════════════════════════════════════
-var db = JSON.parse(localStorage.getItem('cc6') || 'null') || { shows: [], manualB: [] archived: []};
+var db = JSON.parse(localStorage.getItem('cc6') || 'null') || { shows: [], manualB: [], archived: []};
 function save() { localStorage.setItem('cc6', JSON.stringify(db)); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 function getShow(id) { return db.shows.find(function(s){ return s.id === id; }); }
