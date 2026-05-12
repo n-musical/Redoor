@@ -1094,25 +1094,89 @@ function renderB(filter) {
     var toggleId = 'toggle-b-' + s.id;
     var rewardsHtml = '';
 
-    // ... pads, rewards 루프 내부 로직 ...
+    // ✅ 여기가 핵심 — 각 도장판의 혜택을 순회
+    (s.pads || []).forEach(function(p, pi) {
+      var filled = (p.records || []).length;
+
+      (p.rewards || []).forEach(function(r) {
+        // 필터 조건 판단
+        var isUnlocked = filled >= r.n;           // 달성 여부
+        var isUsed = r.used === true;             // 사용 여부 (used 플래그)
+
+        var status = isUsed ? 'used' : (isUnlocked ? 'ok' : 'locked');
+
+        // 필터에 따라 표시 여부 결정
+        if (filter !== 'all' && filter !== status) return;
+
+        // 상태별 스타일
+        var bg, color, label;
+        if (isUsed) {
+          bg = 'var(--bg)'; color = 'var(--mu)'; label = '사용 완료';
+        } else if (isUnlocked) {
+          bg = 'var(--gnl)'; color = 'var(--gn)'; label = '사용 가능';
+        } else {
+          bg = 'var(--bg)'; color = 'var(--mu2)'; label = r.n - filled + '개 남음';
+        }
+
+        rewardsHtml +=
+          '<div style="display:flex; align-items:center; gap:10px; background:' + bg + '; border-radius:10px; padding:10px 12px; margin-bottom:6px;">' +
+            '<div style="flex:1;">' +
+              '<div style="font-size:13px; font-weight:700; color:var(--tx);">' + r.label + '</div>' +
+              '<div style="font-size:11px; color:var(--mu); margin-top:2px;">도장판 #' + (pi + 1) + ' · ' + r.n + '회 달성</div>' +
+            '</div>' +
+            '<div style="font-size:11px; font-weight:700; color:' + color + ';">' + label + '</div>' +
+            // 달성했고 아직 사용 안 했을 때만 "사용하기" 버튼 표시
+            (isUnlocked && !isUsed
+              ? '<button onclick="useReward(\'' + s.id + '\',' + pi + ',' + r.n + ')" style="font-size:11px; padding:4px 10px; border-radius:8px; background:var(--navy); color:#fff; border:none; cursor:pointer; font-family:inherit; font-weight:600;">사용</button>'
+              : '') +
+          '</div>';
+      });
+    });
+
+    // 수동 입력 혜택(manualB)도 표시
+    (db.manualB || []).filter(function(b) { return b.sid === s.id; }).forEach(function(b) {
+      var status = b.used ? 'used' : 'ok';
+      if (filter !== 'all' && filter !== status) return;
+
+      var bg = b.used ? 'var(--bg)' : 'var(--gnl)';
+      var color = b.used ? 'var(--mu)' : 'var(--gn)';
+      var label = b.used ? '사용 완료' : '사용 가능';
+
+      rewardsHtml +=
+        '<div style="display:flex; align-items:center; gap:10px; background:' + bg + '; border-radius:10px; padding:10px 12px; margin-bottom:6px;">' +
+          '<div style="flex:1;">' +
+            '<div style="font-size:13px; font-weight:700; color:var(--tx);">' + b.name + '</div>' +
+            '<div style="font-size:11px; color:var(--mu); margin-top:2px;">직접 입력 · ' + (b.count || 1) + '개</div>' +
+          '</div>' +
+          '<div style="font-size:11px; font-weight:700; color:' + color + ';">' + label + '</div>' +
+          (!b.used
+            ? '<button onclick="useManualB(\'' + b.id + '\')" style="font-size:11px; padding:4px 10px; border-radius:8px; background:var(--navy); color:#fff; border:none; cursor:pointer; font-family:inherit; font-weight:600;">사용</button>'
+            : '') +
+        '</div>';
+    });
 
     if (rewardsHtml !== '') {
       var archiveLabel = s.isArchived ? '<span style="font-size:10px; color:#e74c3c; margin-left:5px;">[보관됨]</span>' : '';
-      html += 
+      html +=
         '<div style="margin: 0 20px 12px; border: 1px solid var(--brd); border-radius: 12px; overflow: hidden;">' +
           '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:#fff; cursor:pointer;">' +
             '<span style="font-size:15px; font-weight:800; color:var(--navy);">' + s.name + archiveLabel + '</span>' +
             '<span id="arrow-' + toggleId + '" style="color:var(--mu2); font-size:14px;">▸</span>' +
           '</div>' +
-          '<div id="' + toggleId + '" class="hidden" style="padding:10px; background:#f9f9f9; border-top:1px solid #eee;">' + 
-            rewardsHtml + 
+          '<div id="' + toggleId + '" class="hidden" style="padding:10px; background:#f9f9f9; border-top:1px solid #eee;">' +
+            rewardsHtml +
           '</div>' +
         '</div>';
     }
-  }); // ← forEach 닫기
+  });
 
-  c.innerHTML = html; // 최종 결과 렌더링
-} // ← 함수 닫기
+  if (html === '') {
+    html = '<div style="text-align:center; padding:50px; color:var(--mu); font-size:13px;">해당하는 혜택이 없어요</div>';
+  }
+
+  c.innerHTML = html;
+}
+
 
   function toggleSection(id) {
   var el = document.getElementById(id);
@@ -1125,43 +1189,33 @@ function renderB(filter) {
 }
 
 // 직접 입력 혜택 사용 처리
-function useManualReward(idx) {
-  if (db.manualB && db.manualB[idx]) {
-    db.manualB[idx].used = true;
-    saveDB();
-    renderB('all');
-    alert('혜택을 사용했습니다!');
-  }
-}
-  function getRewStatus(p, r) {
+
+function getRewStatus(p, r) {
   if (!p || !r) return 'locked';
-  var count = (p.records || []).length; // 현재 찍힌 도장 개수
-  
-  if (count < r.n) {
-    return 'locked'; // 도장 부족: 미달성
-  }
-  return r.used ? 'used' : 'ok'; // 도장 충족: 사용완료 혹은 사용가능
+  var count = (p.records || []).length;
+  if (count < r.n) return 'locked';
+  return r.used ? 'used' : 'ok';
 }
+
 function useReward(showId, padIdx, rewIdx) {
   var show = db.shows.find(function(s) { return s.id === showId; });
-  if (show && show.pads[padIdx].rewards[rewIdx]) {
-    var r = show.pads[padIdx].rewards[rewIdx];
-    if (!r.usedCount) r.usedCount = 0;
-    r.usedCount++; // 사용 개수 증가
-    saveDB(); // 로컬스토리지 저장
-    renderB('all'); // 화면 새로고침
-    alert('혜택을 사용했습니다!');
-  }
+  if (!show) return;
+  var r = show.pads[padIdx].rewards[rewIdx];
+  if (!r) return;
+  if (!confirm('"' + r.label + '"을 사용 처리할까요?')) return;
+  r.used = true;   // ✅ usedCount++ 대신 used = true 로 통일
+  save();          // ✅ saveDB() → save()
+  renderB('all');
 }
 
 function useManualReward(idx) {
-  if (db.manualB[idx]) {
-    db.manualB[idx].used = true;
-    saveDB();
-    renderB('all');
-    alert('혜택을 사용했습니다!');
-  }
+  if (!db.manualB || !db.manualB[idx]) return;
+  if (!confirm('"' + db.manualB[idx].name + '"을 사용 처리할까요?')) return;
+  db.manualB[idx].used = true;
+  save();          // ✅ saveDB() → save()
+  renderB('all');
 }
+
 function deleteShowFromBenefit(id) {
   var s = getShow(id); if (!s) return;
   if (!confirm('"' + s.name + '"을 삭제할까요?\n모든 도장판과 혜택 기록이 삭제됩니다.')) return;
