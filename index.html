@@ -1103,44 +1103,39 @@ function renderB(filter) {
         var status = isLocked ? 'locked' : (available > 0 ? 'ok' : 'used');
 
         if (filter === 'all' || status === filter) {
-  var lockStyle = isLocked ? 'filter: grayscale(1); opacity: 0.6;' : '';
-  
-  // 모든 문자열을 하나의 rewardsHtml 변수에 이어서 더해줍니다.
-  rewardsHtml += 
-    '<div style="background:white; border:1px solid var(--brd); border-radius:10px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; ' + lockStyle + '">' +
-      '<div>' +
-        '<div style="font-size:11px; color:var(--mu); font-weight:600;">' + r.n + '회 혜택</div>' +
-        '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (r.label || '혜택 명칭 없음') + '</div>' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0;">' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:32px;font-weight:800;color:var(--gn);">' + available + '</div>' +
-            '<div style="font-size:11px;color:var(--mu);">미사용</div>' +
-          '</div>' +
-          '<div style="font-size:24px;color:var(--mu2);">→</div>' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:32px;font-weight:800;color:var(--mu);">' + (r.usedCount || 0) + '</div>' +
-            '<div style="font-size:11px;color:var(--mu);">사용 완료</div>' +
-          '</div>' +
-        '</div>' + // 이 줄 끝에 적절히 닫는 태그들이 필요합니다.
-        '<div>' +
-          '<button class="actbtn" style="width:auto;padding:10px 20px;"' + (available <= 0 ? ' disabled' : '') + ' onclick="useMergedBenefit(\'' + s.id + '\',\'' + r.label + '\')">사용</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>'; // <--- 가장 마지막에만 세미콜론을 찍습니다.
-}
-                // 1114라인부터 1125라인 근처의 코드를 이 구조로 교체하세요.
-html += (available > 0 && !isLocked ? 
-    '<button disabled style="padding:6px 10px; background:#eee; color:#aaa; border:none; border-radius:6px; font-size:11px;">' + 
-    (isLocked ? '미달성' : '완료') + 
-    '</button>' 
-    : ''  /* <--- 이 부분이 빠지면 ) 에러가 날 수 있습니다 */
-) + 
-'</div></div>';
-        }
-      });
-    });
+    var lockStyle = isLocked ? 'filter: grayscale(1); opacity: 0.6;' : '';
+    
+    // 1. 기본 레이아웃 구성
+    rewardsHtml += 
+        '<div style="background:white; border:1px solid var(--brd); border-radius:10px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; ' + lockStyle + '">' +
+            '<div>' +
+                '<div style="font-size:11px; color:var(--mu); font-weight:600;">' + r.n + '회 혜택</div>' +
+                '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (r.label || '혜택 명칭 없음') + '</div>' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0;">' +
+                    '<div style="text-align:center;">' +
+                        '<div style="font-size:32px;font-weight:800;color:var(--gn);">' + available + '</div>' +
+                        '<div style="font-size:11px;color:var(--mu);">미사용</div>' +
+                    '</div>' +
+                    '<div style="font-size:24px;color:var(--mu2);">→</div>' +
+                    '<div style="text-align:center;">' +
+                        '<div style="font-size:32px;font-weight:800;color:var(--mu);">' + (r.usedCount || 0) + '</div>' +
+                        '<div style="font-size:11px;color:var(--mu);">사용 완료</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div>' +
+                    '<button class="actbtn" style="width:auto;padding:10px 20px;"' + (available <= 0 ? ' disabled' : '') + 
+                    ' onclick="useMergedBenefit(\'' + s.id + '\',\'' + (r.label || '').replace(/'/g, "\\'") + '\')">사용</button>' +
+                '</div>' +
+            '</div>';
 
-    // 직접 입력 생략 (위와 동일한 로직)
+    // 2. 추가 버튼 (미달성/완료 표시) 결합
+    rewardsHtml += (available > 0 && !isLocked ? 
+        '<button disabled style="padding:6px 10px; background:#eee; color:#aaa; border:none; border-radius:6px; font-size:11px;">' + 
+        (isLocked ? '미달성' : '완료') + 
+        '</button>' : ''
+    ) + '</div></div>'; 
+
+} // if문의 끝 (중괄호는 여기서 딱 한 번만 닫아야 합니다)
 
     if (rewardsHtml !== '') {
       var archiveLabel = s.isArchived ? '<span style="font-size:10px; color:#e74c3c; margin-left:5px;">[보관됨]</span>' : '';
