@@ -1197,16 +1197,17 @@ function getRewStatus(p, r) {
   return r.used ? 'used' : 'ok';
 }
 
-function useReward(showId, padIdx, rewIdx) {
+function useReward(showId, padIdx, rewN) {
   var show = db.shows.find(function(s) { return s.id === showId; });
   if (!show) return;
-  var r = show.pads[padIdx].rewards[rewIdx];
+  var r = show.pads[padIdx].rewards.find(function(x) { return x.n === rewN; }); // ✅ n으로 찾기
   if (!r) return;
   if (!confirm('"' + r.label + '"을 사용 처리할까요?')) return;
-  r.used = true;   // ✅ usedCount++ 대신 used = true 로 통일
-  save();          // ✅ saveDB() → save()
+  r.used = true;
+  save();
   renderB('all');
 }
+
 
 function useManualReward(idx) {
   if (!db.manualB || !db.manualB[idx]) return;
