@@ -1122,8 +1122,7 @@ function renderB(filter) {
 '<div>' +
 '<button class="actbtn" style="width:auto;padding:10px 20px;"' + (available <= 0 ? ' disabled' : '') + ' onclick="useMergedBenefit(\'' + s.id + '\',\'' + r.label + '\')">사용</button>' +
 '</div>' +
-                (available > 0 && !isLocked ? 
-                  '<button onclick="event.stopPropagation();useReward(\''+s.id+'\','+pIdx+','+rIdx+')" style="padding:6px 10px; background:var(--navy); color:white; border:none; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">사용하기</button>' : 
+                (available > 0 && !isLocked ? : 
                   '<button disabled style="padding:6px 10px; background:#eee; color:#aaa; border:none; border-radius:6px; font-size:11px;">' + (isLocked ? '미달성' : '완료') + '</button>') +
               '</div>' +
             '</div>';
