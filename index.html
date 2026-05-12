@@ -1081,20 +1081,64 @@ function renderB(filter) {
 
     // [3] 토글 구조 (HTML이 꼬이지 않게 하나로 묶음)
     if (rewardsHtml !== '') {
-      html += 
-        '<div style="margin: 0 20px 12px; border: 1px solid var(--brd); border-radius: 12px; overflow: hidden;">' +
-          '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:#fff; cursor:pointer;">' +
-            '<span style="font-size:15px; font-weight:800; color:var(--navy);">' + s.name + '</span>' +
-            '<span id="arrow-' + s.id + '" style="color:var(--mu2); font-size:14px;">▸</span>' +
-          '</div>' +
-          '<div id="' + toggleId + '" style="display:none; padding:10px; background:#f9f9f9; border-top:1px solid #eee;">' + 
-            rewardsHtml + 
-          '</div>' +
-        '</div>';
+        // renderB 내부의 토글 부분만 이 구조인지 확인하세요!
+html += 
+  '<div style="margin: 0 20px 12px; border: 1px solid var(--brd); border-radius: 12px; overflow: hidden; background:#fff;">' +
+    // [클릭하는 제목 부분]
+    '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:#fff; cursor:pointer;">' +
+      '<span style="font-size:15px; font-weight:800; color:var(--navy);">' + s.name + '</span>' +
+      '<span id="arrow-' + s.id + '" style="color:var(--mu2); font-size:14px;">▸</span>' +
+    '</div>' +
+    // [숨겨지는 내용 부분] - ID가 정확히 toggleId여야 함
+    '<div id="' + toggleId + '" style="display:none; padding:10px; background:#f9f9f9; border-top:1px solid #eee;">' + 
+      rewardsHtml + 
+    '</div>' +
+  '</div>';
     }
   });
 
   c.innerHTML = html || '<div style="text-align:center; padding:50px; color:var(--mu);">해당하는 혜택이 없습니다.</div>';
+}
+  // 데이터를 로컬스토리지에 저장하는 함수 (이게 없어서 에러가 났던 거예요!)
+function saveDB() {
+  localStorage.setItem('redoor_db', JSON.stringify(db));
+}
+
+// 혜택 사용하기 처리 함수 (안전 모드)
+function useReward(showId, padIdx, rewIdx) {
+  // 1. 해당 공연 찾기
+  var show = db.shows.find(function(s) { return s.id === showId; });
+  if (!show) return;
+
+  // 2. 해당 혜택 찾기 및 개수 업데이트
+  var pad = show.pads[padIdx];
+  if (pad && pad.rewards[rewIdx]) {
+    var r = pad.rewards[rewIdx];
+    
+    // 사용 가능한 개수 체크 (달성 개수 - 사용 개수)
+    var stampCount = (pad.records || []).length;
+    var totalEarned = (stampCount >= r.n) ? 1 : 0;
+    if (!r.usedCount) r.usedCount = 0;
+
+    if (totalEarned > r.usedCount) {
+      r.usedCount++; // 사용 처리
+      saveDB();      // 저장
+      renderB('all'); // 화면 갱신
+      alert('혜택을 사용했습니다!');
+    } else {
+      alert('사용 가능한 혜택이 없습니다.');
+    }
+  }
+}
+
+// 직접 입력 혜택 사용 처리
+function useManualReward(idx) {
+  if (db.manualB && db.manualB[idx]) {
+    db.manualB[idx].used = true;
+    saveDB();
+    renderB('all');
+    alert('혜택을 사용했습니다!');
+  }
 }
   function getRewStatus(p, r) {
   if (!p || !r) return 'locked';
