@@ -904,16 +904,31 @@ function updatePadSel() {
 }
 
 function openRecordModal() {
-  document.getElementById('r-show').innerHTML = var activeShows = db.shows.filter(function(s) { return !s.archived; });
-if (!activeShows.length) {
-  c.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--mu);font-size:14px;">아직 공연이 없어요<br>아래 버튼을 눌러 추가해보세요 🎭</div>';
-} else {
-c.innerHTML = activeShows.map(function(s) { return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');}
+  // 1. 먼저 활성화된 공연 데이터를 필터링하여 변수에 담습니다.
+  var activeShows = db.shows.filter(function(s) { 
+    return !s.archived; 
+  });
+
+  // 2. 대상을 변수(c 등)에 할당하거나 직접 지정합니다.
+  var c = document.getElementById('r-show');
+
+  // 3. 데이터 유무에 따른 조건문 처리
+  if (!activeShows.length) {
+    c.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--mu);font-size:14px;">아직 공연이 없어요<br>아래 버튼을 눌러 추가해보세요 🎭</div>';
+  } else {
+    c.innerHTML = activeShows.map(function(s) { 
+      return '<option value="' + s.id + '">' + s.name + '</option>'; 
+    }).join('');
+  }
+
+  // 나머지 로직 실행
   updatePadSel();
   document.getElementById('r-date').value = today();
   setTime('rec', 'day');
   recordStampCnt = 1;
-  document.querySelectorAll('#record-cnt-row .tgl').forEach(function(b, i) { b.classList.toggle('on', i === 0); });
+  document.querySelectorAll('#record-cnt-row .tgl').forEach(function(b, i) { 
+    b.classList.toggle('on', i === 0); 
+  });
   openModal('m-record');
 }
 
