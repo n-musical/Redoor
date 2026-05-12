@@ -511,6 +511,11 @@ function renderHome() {
   var bn = document.getElementById('home-banner');
   if (found) { document.getElementById('banner-txt').textContent = '오늘 ' + found + ' 관람!'; bn.style.display = 'flex'; }
   else bn.style.display = 'none';
+  html += '<div style="margin: 10px 20px;">' +
+          '<button onclick="renderArchive()" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--brd); border-radius:12px; color:var(--mu); font-size:13px; font-weight:600; cursor:pointer;">' +
+            '📜 지난 공연(보관함) 보기' +
+          '</button>' +
+        '</div>';
 }
 
 function addShow() {
@@ -543,6 +548,40 @@ function archiveShow(id) {
   save(); // 데이터 저장
   renderHome(); // 홈 새로고침
   renderB('all'); // 혜택 탭 새로고침
+}
+  function renderArchive() {
+  var c = document.getElementById('b-list'), html = '';
+  // 보관된 공연들만 필터링
+  var archivedShows = db.shows.filter(function(s) { return s.isArchived === true; });
+
+  if (archivedShows.length === 0) {
+    html = '<div style="text-align:center; padding:40px 20px; color:var(--mu); font-size:14px;">보관된 공연이 없습니다.</div>';
+  } else {
+    html += '<div style="padding:10px 20px; font-weight:700; color:var(--navy);">지난 공연 목록</div>';
+    archivedShows.forEach(function(s) {
+      html += '<div style="margin:0 20px 8px; padding:12px 14px; background:white; border:1px solid var(--brd); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">' +
+                '<span style="font-size:13px; font-weight:600;">' + s.name + '</span>' +
+                '<button onclick="restoreShow(\'' + s.id + '\')" style="font-size:10px; padding:4px 8px; border-radius:6px; background:var(--navy); color:white; border:none;">꺼내기</button>' +
+              '</div>';
+    });
+  }
+  
+  // 뒤로가기 버튼 (다시 혜택 화면 등으로 돌아가기 위해)
+  html += '<div style="margin:20px; text-align:center;">' +
+            '<button onclick="renderB(\'all\')" style="color:var(--mu); background:none; border:none; text-decoration:underline; font-size:12px;">돌아가기</button>' +
+          '</div>';
+
+  c.innerHTML = html;
+}
+  function restoreShow(id) {
+  var s = getShow(id);
+  if (!s) return;
+  
+  if (confirm('"' + s.name + '" 공연을 다시 활성화할까요?')) {
+    s.isArchived = false; // 보관 표시 해제
+    save();
+    renderArchive(); // 보관함 목록 새로고침
+  }
 }
 
 // ════════════════════════════════════════
