@@ -1055,10 +1055,15 @@ function renderB(filter) {
 
       var remain = g.total - g.used;
 
-      var status = 'ok';
+var status;
 
-      if (remain <= 0) status = 'used';
-      if (g.total <= 0) status = 'locked';
+if (g.total <= 0) {
+  status = 'locked';
+} else if (remain <= 0) {
+  status = 'used';
+} else {
+  status = 'ok';
+}
 
       if (filter !== 'all' && filter !== status) return;
 
@@ -1079,9 +1084,11 @@ function renderB(filter) {
               (remain > 0 ? 'var(--gn)' : 'var(--mu)') +
               ';margin-top:3px;">' +
 
-              (remain > 0
-                ? '사용 가능 ' + remain + '개 남음'
-                : '모두 사용 완료') +
+               (status === 'locked'
+  ? '아직 달성하지 못했어요'
+  : remain > 0
+    ? '사용 가능 ' + remain + '개 남음'
+    : '모두 사용 완료') +
 
             '</div>' +
 
