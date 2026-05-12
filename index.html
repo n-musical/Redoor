@@ -960,73 +960,90 @@ function openCalEdit(si, pi, ri) {
 // ════════════════════════════════════════
 // 혜택
 // ════════════════════════════════════════
+// ════════════════════════════════════════
+// 혜택
+// ════════════════════════════════════════
 function renderB(filter) {
-  console.log("필터 상태:", filter); // 폰에서 에러가 나는지 확인용
   try {
-    // 기존 코드들...
-  } catch (e) {
-    alert("에러 발생: " + e.message); // 폰 화면에 에러를 직접 띄웁니다
-  }
-}
-  var c = document.getElementById('b-list'), html = '';
-  db.shows.forEach(function(s) {
-    var mergedMap = {};
-    db.manualB.filter(function(b) { return b.sid === s.id; }).forEach(function(b) {
-      if (mergedMap[b.label]) { mergedMap[b.label].total += b.total; mergedMap[b.label].used += b.used; mergedMap[b.label].ids.push(b.id); }
-      else mergedMap[b.label] = { label: b.label, total: b.total, used: b.used, ids: [b.id], isLocked: false };
-    });
-    var earned = Object.values(mergedMap);
-    var lockedMap = {};
-    s.pads.forEach(function(p, pi) {
-      var filled = (p.records || []).length;
-      p.rewards.forEach(function(r) {
-        if (filled < r.n) {
-          var already = db.manualB.find(function(b) { return b.sid === s.id && b.pi === pi && b.label === r.label; });
-          if (!already) {
-            if (lockedMap[r.label]) lockedMap[r.label].need = Math.min(lockedMap[r.label].need, r.n - filled);
-            else lockedMap[r.label] = { label: r.label, need: r.n - filled, isLocked: true };
-          }
+    var c = document.getElementById('b-list'), html = '';
+    if (!c) return; // 리스트 영역이 없으면 중단
+
+    db.shows.forEach(function(s) {
+      var mergedMap = {};
+      db.manualB.filter(function(b) { return b.sid === s.id; }).forEach(function(b) {
+        if (mergedMap[b.label]) { 
+          mergedMap[b.label].total += b.total; 
+          mergedMap[b.label].used += b.used; 
+          mergedMap[b.label].ids.push(b.id); 
+        } else {
+          mergedMap[b.label] = { label: b.label, total: b.total, used: b.used, ids: [b.id], isLocked: false };
         }
       });
+
+      var earned = Object.values(mergedMap);
+      var lockedMap = {};
+      s.pads.forEach(function(p, pi) {
+        var filled = (p.records || []).length;
+        p.rewards.forEach(function(r) {
+          if (filled < r.n) {
+            var already = db.manualB.find(function(b) { return b.sid === s.id && b.pi === pi && b.label === r.label; });
+            if (!already) {
+              if (lockedMap[r.label]) {
+                lockedMap[r.label].need = Math.min(lockedMap[r.label].need, r.n - filled);
+              } else {
+                lockedMap[r.label] = { label: r.label, need: r.n - filled, isLocked: true };
+              }
+            }
+          }
+        });
+      });
+
+      var all = earned.concat(Object.values(lockedMap));
+      var filtered = all.filter(function(b) {
+        if (filter === 'all') return true;
+        if (filter === 'ok') return !b.isLocked && (b.total - b.used) > 0;
+        if (filter === 'used') return !b.isLocked && b.used > 0;
+        if (filter === 'locked') return b.isLocked;
+        return true;
+      });
+
+      if (!filtered.length) return;
+
+      var toggleId = 'toggle-' + s.id;
+      html += '<div style="margin:0 20px 4px;">' +
+        '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:12px;cursor:pointer;">' +
+        '<span style="font-size:13px;font-weight:700;color:var(--navy);">' + s.name + '</span>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<button onclick="event.stopPropagation();deleteShowFromBenefit(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">삭제</button>' +
+        '<span id="arrow-' + s.id + '" style="color:var(--mu);font-size:14px;">▾</span>' +
+        '</div></div>' +
+        '<div id="' + toggleId + '" style="display:block;">'; // 초기 상태 block 추가
+
+      filtered.forEach(function(b) {
+        if (b.isLocked) {
+          html += '<div class="blocked">' +
+            '<span style="font-weight:700;">' + b.label + '</span>' +
+            '<span style="color:var(--mu2);"> · ' + b.need + '개 남음</span></div>';
+        } else {
+          var avail = b.total - b.used;
+          html += '<div class="bcard">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+            '<div style="font-size:14px;font-weight:700;color:var(--navy);">🎟 ' + b.label + '</div>' +
+            '<div style="font-size:11px;color:var(--mu);">누적 ' + b.total + '개</div></div>' +
+            '<div class="cntrow"><div class="cntbox cok"><div class="n">' + avail + '</div><div class="l">미사용</div></div>' +
+            '<div class="cntbox cno"><div class="n">' + b.used + '</div><div class="l">사용 완료</div></div></div>' +
+            '<button class="actbtn"' + (avail <= 0 ? ' disabled' : '') + ' onclick="useMergedBenefit(\'' + sid + '\',\'' + b.label + '\')">사용하기</button></div>';
+        }
+      });
+      html += '</div></div>';
     });
-    var all = earned.concat(Object.values(lockedMap));
-    var filtered = all.filter(function(b) {
-      if (filter === 'all') return true;
-      if (filter === 'ok') return !b.isLocked && (b.total - b.used) > 0;
-      if (filter === 'used') return !b.isLocked && b.used > 0;
-      if (filter === 'locked') return b.isLocked;
-      return true;
-    });
-    if (!filtered.length) return;
-    var toggleId = 'toggle-' + s.id;
-    html += '<div style="margin:0 20px 4px;">' +
-      '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:12px;cursor:pointer;">' +
-      '<span style="font-size:13px;font-weight:700;color:var(--navy);">' + s.name + '</span>' +
-      '<div style="display:flex;align-items:center;gap:8px;">' +
-      '<button onclick="event.stopPropagation();deleteShowFromBenefit(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">삭제</button>' +
-      '<span id="arrow-' + s.id + '" style="color:var(--mu);font-size:14px;">▾</span>' +
-      '</div></div>' +
-      '<div id="' + toggleId + '"style="display:block;">';
-    filtered.forEach(function(b) {
-      if (b.isLocked) {
-        html += '<div class="blocked" style="margin:4px 0 0;">' +
-          '<span style="font-weight:700;">' + b.label + '</span>' +
-          '<span style="color:var(--mu2);">· ' + b.need + '개 남음</span></div>';
-      } else {
-        var avail = b.total - b.used;
-        html += '<div class="bcard" style="margin:4px 0 0;">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-          '<div style="font-size:14px;font-weight:700;color:var(--navy);">🎟 ' + b.label + '</div>' +
-          '<div style="font-size:11px;color:var(--mu);">누적 ' + b.total + '개</div></div>' +
-          '<div class="cntrow"><div class="cntbox cok"><div class="n">' + avail + '</div><div class="l">미사용</div></div>' +
-          '<div class="cntbox cno"><div class="n">' + b.used + '</div><div class="l">사용 완료</div></div></div>' +
-          '<button class="actbtn"' + (avail <= 0 ? ' disabled' : '') + ' onclick="useMergedBenefit(\'' + s.id + '\',\'' + b.label + '\')">사용하기</button></div>';
-      }
-    });
-    html += '</div></div>';
-  });
-  if (!html) html = '<div style="text-align:center;padding:40px 20px;color:var(--mu);font-size:14px;">아직 혜택이 없어요<br>도장판을 채우면 자동으로 추가돼요 🎁</div>';
-  c.innerHTML = html;
+
+    if (!html) html = '<div style="text-align:center;padding:40px 20px;color:var(--mu);font-size:14px;">아직 혜택이 없어요<br>도장판을 채우면 자동으로 추가돼요 🎁</div>';
+    c.innerHTML = html;
+
+  } catch (e) {
+    console.error("renderB 에러:", e);
+  }
 }
 
 function toggleSection(id) {
