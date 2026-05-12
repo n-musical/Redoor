@@ -961,6 +961,13 @@ function openCalEdit(si, pi, ri) {
 // 혜택
 // ════════════════════════════════════════
 function renderB(filter) {
+  console.log("필터 상태:", filter); // 폰에서 에러가 나는지 확인용
+  try {
+    // 기존 코드들...
+  } catch (e) {
+    alert("에러 발생: " + e.message); // 폰 화면에 에러를 직접 띄웁니다
+  }
+}
   var c = document.getElementById('b-list'), html = '';
   db.shows.forEach(function(s) {
     var mergedMap = {};
