@@ -1034,58 +1034,50 @@ function renderB(filter) {
 
   activeShows.forEach(function(s) {
     var toggleId = 'toggle-' + s.id;
-    var rewardsHtml = ''; // 혜택들을 임시로 모을 그릇
+    var rewardsHtml = '';
 
-    // 1. 도장판 혜택 모으기
+    // 도장판 혜택 정리
     (s.pads || []).forEach(function(p) {
       (p.rewards || []).forEach(function(r) {
         var count = (p.records || []).length;
         var status = (count < r.n) ? 'locked' : (r.used ? 'used' : 'ok');
+        
         if (filter === 'all' || status === filter) {
           rewardsHtml += 
-            '<div style="background:white; border:1px solid var(--brd); border-radius:10px; padding:12px; margin-bottom:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">' +
-              '<div style="font-size:10px; color:var(--mu); margin-bottom:2px;">' + (p.emoji || '🎫') + ' ' + (p.total || 0) + '칸 판</div>' +
-              '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (r.label || '제목 없음') + '</div>' +
+            '<div style="background:white; border:1px solid var(--brd); border-radius:10px; padding:12px; margin-bottom:8px;">' +
+              '<div style="font-size:11px; color:var(--navy); font-weight:600;">' + r.n + '회 혜택</div>' + // '9칸 판' 대신 'N회 혜택'
+              '<div style="font-size:14px; font-weight:700; color:var(--tx); margin-top:2px;">' + (r.label || '혜택 명칭 없음') + '</div>' +
             '</div>';
         }
       });
     });
 
-    // 2. 직접 입력 혜택 모으기
+    // 직접 입력 혜택 정리
     (db.manualB || []).filter(function(m) { return m.sid === s.id; }).forEach(function(m) {
       var mStatus = m.used ? 'used' : 'ok';
       if (filter === 'all' || mStatus === filter) {
         rewardsHtml += 
-          '<div style="background:white; border:1px solid var(--brd); border-radius:10px; padding:12px; margin-bottom:8px; border-left: 4px solid var(--navy);">' +
-            '<div style="font-size:10px; color:var(--mu); margin-bottom:2px;">직접 입력</div>' +
-            '<div style="font-size:14px; font-weight:700; color:var(--tx);">' + (m.name || '제목 없음') + '</div>' +
+          '<div style="background:white; border:1px solid var(--brd); border-radius:10px; padding:12px; margin-bottom:8px; border-left:4px solid var(--navy);">' +
+            '<div style="font-size:11px; color:var(--purple); font-weight:600;">기타 혜택</div>' +
+            '<div style="font-size:14px; font-weight:700; color:var(--tx); margin-top:2px;">' + (m.name || '제목 없음') + '</div>' +
           '</div>';
       }
     });
 
-    // 3. 공연 섹션 그리기 (구조 핵심!)
     if (rewardsHtml !== '') {
-      html += '<div style="margin: 0 20px 12px;">' + 
-                // [제목 줄]
-                '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:#f8f9fa; border-radius:12px; cursor:pointer; position:relative; z-index:10;">' +
+      html += '<div style="margin: 0 20px 12px; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">' +
+                '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:#f8f9fa; cursor:pointer;">' +
                   '<span style="font-size:14px; font-weight:800; color:var(--navy);">' + s.name + '</span>' +
-                  '<div style="display:flex; align-items:center; gap:8px;">' +
-                    '<div style="display:flex; flex-direction:column; gap:2px;">' +
-                      '<button onclick="event.stopPropagation();archiveShow(\'' + s.id + '\')" style="font-size:8px; padding:2px 5px; border-radius:4px; background:white; color:var(--mu); border:1px solid var(--brd);">보관</button>' +
-                      '<button onclick="event.stopPropagation();deleteShow(\'' + s.id + '\')" style="font-size:8px; padding:2px 5px; border-radius:4px; background:#fff0f0; color:#e74c3c; border:none;">삭제</button>' +
-                    '</div>' +
-                    '<span id="arrow-' + s.id + '" style="color:var(--mu2); font-size:14px;">▸</span>' +
-                  '</div>' +
+                  '<span id="arrow-' + s.id + '" style="color:var(--mu2); font-size:14px;">▸</span>' +
                 '</div>' +
-                // [혜택 주머니] - display: none으로 시작해야 숨겨집니다.
-                '<div id="' + toggleId + '" style="display:none; margin-top:10px;">' + 
+                '<div id="' + toggleId + '" style="display:none; padding:10px; background:#fff;">' + 
                   rewardsHtml + 
                 '</div>' +
-              '</div>'; 
+              '</div>';
     }
   });
 
-  c.innerHTML = html || '<div style="text-align:center; padding:40px; color:var(--mu);">해당하는 혜택이 없습니다.</div>';
+  c.innerHTML = html || '<div style="text-align:center; padding:40px; color:var(--mu);">혜택이 없습니다.</div>';
 }
   function getRewStatus(p, r) {
   if (!p || !r) return 'locked';
