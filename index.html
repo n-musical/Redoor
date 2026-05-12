@@ -249,7 +249,16 @@ emoji-picker { width: 100%; height: 320px; border-radius: 14px; margin-bottom: 1
     </div>
   </div>
 </div>
-
+<div class="ov" id="m-archive">
+  <div class="modal">
+    <h3>📦 보관함</h3>
+    <div id="archive-list"></div>
+    <div class="brow" style="margin-top:16px;">
+      <button class="mbtn s" onclick="closeModal('m-archive')">닫기</button>
+    </div>
+  </div>
+</div>
+  
 <!-- 모달: 도장판 추가 -->
 <div class="ov" id="m-add-pad">
   <div class="modal">
@@ -397,7 +406,7 @@ var COLORS = ['#4a3580','#1a4060','#5c2a10','#1f5040','#5c3a00','#3a1f60','#8b22
 // ════════════════════════════════════════
 // DB
 // ════════════════════════════════════════
-var db = JSON.parse(localStorage.getItem('cc6') || 'null') || { shows: [], manualB: [] };
+var db = JSON.parse(localStorage.getItem('cc6') || 'null') || { shows: [], manualB: [] archived: []};
 function save() { localStorage.setItem('cc6', JSON.stringify(db)); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 function getShow(id) { return db.shows.find(function(s){ return s.id === id; }); }
@@ -505,11 +514,10 @@ function renderHome() {
                     '<span style="color:var(--navy); font-weight:700;">도장판 ' + padCount + '개</span>' + // 도장판 개수 표시
                   '</div>' +
                 '</div>' +
-                '<div style="display:flex; flex-direction:column; gap:3px;">' +
-                  '<button onclick="event.stopPropagation();archiveShow(\'' + s.id + '\')" style="font-size:9px; padding:2px 6px; border-radius:4px; background:var(--bg); color:var(--mu); border:1px solid var(--brd); cursor:pointer;">보관</button>' +
-                  '<button onclick="event.stopPropagation();deleteShow(\'' + s.id + '\')" style="font-size:9px; padding:2px 6px; border-radius:4px; background:#fdeaea; color:#c0392b; border:none; cursor:pointer;">삭제</button>' +
-                '</div>' +
-              '</div>';
+                '<div style="margin-top:10px;display:flex;gap:6px;">' +
+'<button onclick="event.stopPropagation();archiveShow(\'' + s.id + '\')" style="flex:1;padding:7px;font-size:12px;border-radius:8px;background:var(--pl);color:var(--purple);border:none;cursor:pointer;font-family:inherit;font-weight:600;">📦 보관</button>' +
+'<button onclick="event.stopPropagation();deleteShow(\'' + s.id + '\')" style="flex:1;padding:7px;font-size:12px;border-radius:8px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">🗑 삭제</button>' +
+'</div></div>';
     });
   }
 
@@ -519,7 +527,7 @@ function renderHome() {
   html += '<div style="margin: 0 20px 20px;">' +
             '<button onclick="renderArchive()" style="width:100%; padding:8px; background:none; border:1px solid var(--brd); border-radius:8px; color:var(--mu); font-size:11px; cursor:pointer;">📜 지난 공연 보관함</button>' +
           '</div>';
-
+<div class="addcard" onclick="openArchive()" style="color:var(--purple);border-color:var(--pl);">📦 보관함 보기</div>
   c.innerHTML = html;
 }
 function addShow() {
@@ -555,7 +563,39 @@ function addShow() {
   db.shows = db.shows.filter(function(s) { return s.id !== id; });
   save(); renderHome();
 }
+function archiveShow(id) {
+  var s = getShow(id); if (!s) return;
+  if (!confirm('"' + s.name + '"을 보관할까요?\n보관함에서 다시 확인할 수 있어요.')) return;
+  s.archived = true;
+  save(); renderHome(); renderB('all');
+}
 
+function openArchive() {
+  var archived = db.shows.filter(function(s) { return s.archived; });
+  var c = document.getElementById('archive-list');
+  if (!archived.length) {
+    c.innerHTML = '<div style="text-align:center;padding:30px 0;color:var(--mu);font-size:14px;">보관된 공연이 없어요</div>';
+  } else {
+    c.innerHTML = archived.map(function(s) {
+      var totalPads = s.pads.length;
+      var donePads = s.pads.filter(function(p) { return (p.records||[]).length >= p.total; }).length;
+      return '<div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:10px;">' +
+        '<div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px;">' + s.name + '</div>' +
+        '<div style="font-size:12px;color:var(--mu);margin-bottom:10px;">도장판 ' + totalPads + '개 · 완료 ' + donePads + '개</div>' +
+        '<div style="display:flex;gap:6px;">' +
+        '<button onclick="unarchiveShow(\'' + s.id + '\')" style="flex:1;padding:7px;font-size:12px;border-radius:8px;background:var(--pl);color:var(--purple);border:none;cursor:pointer;font-family:inherit;font-weight:600;">↩ 복원</button>' +
+        '<button onclick="deleteShow(\'' + s.id + '\')" style="flex:1;padding:7px;font-size:12px;border-radius:8px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">🗑 삭제</button>' +
+        '</div></div>';
+    }).join('');
+  }
+  openModal('m-archive');
+}
+
+function unarchiveShow(id) {
+  var s = getShow(id); if (!s) return;
+  s.archived = false;
+  save(); renderHome(); renderB('all'); openArchive();
+}
 function goShow(id) {
   var s = db.shows.find(function(x) { return x.id === id; });
   if (!s) return;
@@ -864,7 +904,11 @@ function updatePadSel() {
 }
 
 function openRecordModal() {
-  document.getElementById('r-show').innerHTML = db.shows.map(function(s) { return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');
+  document.getElementById('r-show').innerHTML = var activeShows = db.shows.filter(function(s) { return !s.archived; });
+if (!activeShows.length) {
+  c.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--mu);font-size:14px;">아직 공연이 없어요<br>아래 버튼을 눌러 추가해보세요 🎭</div>';
+} else {
+c.innerHTML = activeShows.map(function(s) { return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');}
   updatePadSel();
   document.getElementById('r-date').value = today();
   setTime('rec', 'day');
@@ -1029,7 +1073,7 @@ function renderB(filter) {
     return;
   }
 
-  allShows.forEach(function(s) {
+  db.shows.filter(function(s) { return !s.archived; }).forEach(function(s) {
     var toggleId = 'toggle-b-' + s.id; // ID 중복 방지
     var rewardsHtml = '';
 
@@ -1133,16 +1177,12 @@ function useManualReward(idx) {
 }
 function toggleSection(id) {
   var el = document.getElementById(id);
-  var arrow = document.getElementById('arrow-' + id);
+  var sid = id.replace('toggle-', '');
+  var arrow = document.getElementById('arrow-' + sid);
   if (!el) return;
-  
-  if (el.style.display === 'none') {
-    el.style.display = 'block';
-    if (arrow) arrow.textContent = '▾';
-  } else {
-    el.style.display = 'none';
-    if (arrow) arrow.textContent = '▸';
-  }
+  var isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  if (arrow) arrow.textContent = isHidden ? '▾' : '▸';
 }
 function useReward(showId, padIdx, rewIdx) {
   var show = db.shows.find(function(s) { return s.id === showId; });
