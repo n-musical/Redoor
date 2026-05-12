@@ -532,7 +532,6 @@ function renderHome() {
   html += '<div style="margin: 0 20px 20px;">' +
             '<button onclick="renderArchive()" style="width:100%; padding:8px; background:none; border:1px solid var(--brd); border-radius:8px; color:var(--mu); font-size:11px; cursor:pointer;">📜 지난 공연 보관함</button>' +
           '</div>';
-html += '<div class="addcard" onclick="openArchive()" style="color:var(--purple);border-color:var(--pl);">📦 보관함 보기</div>'
   c.innerHTML = html;
 }
 function addShow() {
@@ -1145,12 +1144,13 @@ function renderB(filter) {
       rewardsHtml +=
         '<div style="display:flex; align-items:center; gap:10px; background:' + bg + '; border-radius:10px; padding:10px 12px; margin-bottom:6px;">' +
           '<div style="flex:1;">' +
-            '<div style="font-size:13px; font-weight:700; color:var(--tx);">' + b.name + '</div>' +
-            '<div style="font-size:11px; color:var(--mu); margin-top:2px;">직접 입력 · ' + (b.count || 1) + '개</div>' +
+            '<div style="font-size:13px; font-weight:700; color:var(--tx);">' + (b.label || b.name) + '</div>' +
+'<div style="font-size:11px; color:var(--mu); margin-top:2px;">직접 입력 · ' + (b.total || b.count || 1) + '개</div>' +
           '</div>' +
           '<div style="font-size:11px; font-weight:700; color:' + color + ';">' + label + '</div>' +
           (!b.used
-            ? '<button onclick="useManualB(\'' + b.id + '\')" style="font-size:11px; padding:4px 10px; border-radius:8px; background:var(--navy); color:#fff; border:none; cursor:pointer; font-family:inherit; font-weight:600;">사용</button>'
+            ? '<button onclick="useManualBById(\'' + b.id + '\')"
+ style="font-size:11px; padding:4px 10px; border-radius:8px; background:var(--navy); color:#fff; border:none; cursor:pointer; font-family:inherit; font-weight:600;">사용</button>'
             : '') +
         '</div>';
     });
@@ -1253,6 +1253,14 @@ function addManualB() {
   save(); closeModal('m-add-benefit');
   document.getElementById('b-name').value = '';
   renderB('all'); document.querySelectorAll('.fb')[0].classList.add('on');
+}
+function useManualBById(id) {
+  var b = db.manualB.find(function(x) { return x.id === id; });
+  if (!b) return;
+  if (!confirm('"' + (b.label || b.name) + '"을 사용 처리할까요?')) return;
+  b.used = true;
+  save();
+  renderB('all');
 }
 
 // ════════════════════════════════════════
