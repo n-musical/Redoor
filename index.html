@@ -486,36 +486,25 @@ function goBack() {
 // 홈
 // ════════════════════════════════════════
 function renderHome() {
-  var c = document.getElementById('home-list');
-  if (!db.shows.length) {
-    c.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--mu);font-size:14px;">아직 공연이 없어요<br>아래 버튼을 눌러 추가해보세요 🎭</div>';
-    return;
-  }
-  c.innerHTML = db.shows.map(function(s) {
-    var active = s.pads.filter(function(p) { return (p.records || []).length < p.total; }).length;
-    return '<div class="card" onclick="goShow(\'' + s.id + '\')">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-      '<div style="font-size:16px;font-weight:700;color:var(--navy);">' + s.name + '</div>' +
-      '<div style="color:var(--purple);font-weight:700;">›</div></div>' +
-      '<span class="tag">' + s.genre + '</span>' +
-      '<div style="margin-top:8px;font-size:12px;color:var(--mu);">도장판 ' + s.pads.length + '개 · 진행 중 ' + active + '개</div>' +
-'<div style="margin-top:10px;"><button onclick="event.stopPropagation();deleteShow(\'' + s.id + '\')" style="width:100%;padding:7px;font-size:12px;border-radius:8px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">🗑 공연 삭제</button></div>' +
-'</div>';
-  }).join('');
-  var td = today(), found = null;
+  // 1. 여기서 html 변수를 빈 상자로 먼저 만들어줘야 합니다.
+  var c = document.getElementById('h-list'), html = ''; 
+  if (!c) return;
+
+  // 2. 홈 화면에 보관된 공연을 제외한 목록을 그리는 코드 (기존 유지)
   db.shows.forEach(function(s) {
-    s.pads.forEach(function(p) {
-      (p.records || []).forEach(function(r) { if (r.date === td) found = s.name; });
-    });
+    if (s.isArchived) return; // 보관된 공연은 홈에서도 안 보이게!
+    
+    // (여기에 기존에 쓰시던 홈 목록 그리는 html += ... 코드들이 들어갑니다)
   });
-  var bn = document.getElementById('home-banner');
-  if (found) { document.getElementById('banner-txt').textContent = '오늘 ' + found + ' 관람!'; bn.style.display = 'flex'; }
-  else bn.style.display = 'none';
+
+  // 3. 목록 맨 아래에 '지난 공연 보기' 버튼 추가
   html += '<div style="margin: 10px 20px;">' +
-          '<button onclick="renderArchive()" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--brd); border-radius:12px; color:var(--mu); font-size:13px; font-weight:600; cursor:pointer;">' +
-            '📜 지난 공연(보관함) 보기' +
-          '</button>' +
-        '</div>';
+            '<button onclick="renderArchive()" style="width:100%; padding:12px; background:var(--bg); border:1px solid var(--brd); border-radius:12px; color:var(--mu); font-size:13px; font-weight:600; cursor:pointer;">' +
+              '📜 지난 공연(보관함) 보기' +
+            '</button>' +
+          '</div>';
+
+  c.innerHTML = html;
 }
 
 function addShow() {
