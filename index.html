@@ -532,6 +532,18 @@ function addShow() {
 }
 
 function goShow(id) { curShow = id; stack.push('show'); renderShowSc(); showSc('show'); }
+function archiveShow(id) {
+  var s = getShow(id); // 공연 정보 가져오기
+  if (!s) return;
+  
+  if (!confirm('"' + s.name + '" 공연을 보관할까요?\n보관된 공연은 혜택 목록에서 숨겨지며, 나중에 다시 확인할 수 있습니다..')) return;
+  
+  s.isArchived = true; // 보관 표시(Flag) 추가
+  
+  save(); // 데이터 저장
+  renderHome(); // 홈 새로고침
+  renderB('all'); // 혜택 탭 새로고침
+}
 
 // ════════════════════════════════════════
 // 공연별 도장판 목록
@@ -967,9 +979,11 @@ function renderB(filter) {
   try {
     var c = document.getElementById('b-list'), html = '';
     if (!c) return; // 리스트 영역이 없으면 중단
+db.shows.forEach(function(s) {
+  // ★ 이 줄을 꼭 추가하세요! 보관된 공연은 여기서 건너뜁니다.
+  if (s.isArchived === true) return; 
+  var mergedMap = {};
 
-    db.shows.forEach(function(s) {
-      var mergedMap = {};
       db.manualB.filter(function(b) { return b.sid === s.id; }).forEach(function(b) {
         if (mergedMap[b.label]) { 
           mergedMap[b.label].total += b.total; 
@@ -1013,10 +1027,11 @@ function renderB(filter) {
       html += '<div style="margin:0 20px 4px;">' +
         '<div onclick="toggleSection(\'' + toggleId + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:12px;cursor:pointer;">' +
         '<span style="font-size:13px;font-weight:700;color:var(--navy);">' + s.name + '</span>' +
-        '<div style="display:flex;align-items:center;gap:8px;">' +
-        '<button onclick="event.stopPropagation();deleteShowFromBenefit(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">삭제</button>' +
-        '<span id="arrow-' + s.id + '" style="color:var(--mu);font-size:14px;">▾</span>' +
-        '</div></div>' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+  '<button onclick="event.stopPropagation();archiveShow(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--mu);border:none;cursor:pointer;font-family:inherit;font-weight:600;">보관</button>' +
+  '<button onclick="event.stopPropagation();deleteShowFromBenefit(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">삭제</button>' +
+  '<span id="arrow-' + s.id + '" style="color:var(--mu);font-size:14px;">▾</span>' +
+'</div>'</div>' +
         '<div id="' + toggleId + '" style="display:block;">'; // 초기 상태 block 추가
 
       filtered.forEach(function(b) {
