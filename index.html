@@ -71,17 +71,14 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .sedit { font-size: 9px; background: var(--pl); color: var(--purple); border: none; border-radius: 5px; padding: 2px 5px; cursor: pointer; font-family: inherit; }
 .sdel { font-size: 9px; background: #fdeaea; color: #c0392b; border: none; border-radius: 5px; padding: 2px 5px; cursor: pointer; font-family: inherit; }
 /* 혜택 */
-.bfil { 
-    padding: 12px 20px; 
-    display: flex; 
-    gap: 8px; 
-    overflow-x: auto; /* 가로 스크롤 */
-    align-items: center; /* 버튼들을 세로 중앙 정렬 */
-    
-    /* 모바일에서 스크롤바가 안 보이게 숨기기 (깔끔해집니다) */
-    -ms-overflow-style: none; /* IE */
-    scrollbar-width: none; /* Firefox */
+.bfil {
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;   /* ✅ 이 줄 추가 */
+  gap: 8px;
+  align-items: stretch;     /* ✅ 버튼이 가득 차도록 */
 }
+
 
 /* 크롬, 사파리, 앱 내 웹뷰에서 스크롤바 숨기기 */
 .bfil::-webkit-scrollbar {
