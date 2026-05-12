@@ -1070,7 +1070,7 @@ db.shows.forEach(function(s) {
   '<button onclick="event.stopPropagation();archiveShow(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--mu);border:none;cursor:pointer;font-family:inherit;font-weight:600;">보관</button>' +
   '<button onclick="event.stopPropagation();deleteShowFromBenefit(\'' + s.id + '\')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:#fdeaea;color:#c0392b;border:none;cursor:pointer;font-family:inherit;font-weight:600;">삭제</button>' +
   '<span id="arrow-' + s.id + '" style="color:var(--mu);font-size:14px;">▾</span>' +
-'</div>'</div>' +
+'</div></div>' +
         '<div id="' + toggleId + '" style="display:block;">'; // 초기 상태 block 추가
 
       filtered.forEach(function(b) {
