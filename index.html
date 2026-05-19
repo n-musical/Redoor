@@ -209,7 +209,7 @@ emoji-picker { width: 100%; height: 320px; border-radius: 14px; margin-bottom: 1
     <button class="fb on" onclick="filterB('all',this)">전체</button>
     <button class="fb" onclick="filterB('ok',this)">사용 가능</button>
     <button class="fb" onclick="filterB('used',this)">사용 완료</button>
-    <button class="fb" onclick="filterB('locked',this)">미달성</button>
+    <button class="fb" onclick="filterB('',this)">미달성</button>
   </div>
   <div id="b-list"></div>
   <div style="padding:0 20px 12px;">
@@ -1087,10 +1087,9 @@ function renderB(filter) {
           };
         }
 
-        if (filled >= r.n) {
+       if (filled >= r.n) {
           grouped[r.label].total += (r.count || 1);
-
-          if (r.used) grouped[r.label].used += (r.count || 1);
+          grouped[r.label].used += (r.usedCount || 0);
         } else {
           grouped[r.label].locked++;
         }
@@ -1166,11 +1165,12 @@ if (g.total <= 0) {
           '</div>' +
 
            (
-  status === 'locked'
+ status === 'locked'
     ? '<div style="font-size:11px;font-weight:700;color:var(--mu);">미달성</div>'
-    : remain > 0
-      ? '<button onclick="usePadReward(\'' + s.id + '\', \'' + g.label.replace(/'/g, "\\'") + '\')" style="font-size:11px;padding:6px 12px;border-radius:8px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-family:inherit;font-weight:700;">사용하기</button>'
-      : '<div style="font-size:11px;font-weight:700;color:var(--mu);">완료</div>'
+    : '<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">' +
+        (remain > 0 ? '<button onclick="usePadReward(\'' + s.id + '\', \'' + g.label.replace(/'/g, "\\'") + '\', \'use\')" style="font-size:11px;padding:6px 12px;border-radius:8px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-family:inherit;font-weight:700;width:70px;">사용하기</button>' : '') +
+        (g.used > 0 ? '<button onclick="usePadReward(\'' + s.id + '\', \'' + g.label.replace(/'/g, "\\'") + '\', \'cancel\')" style="font-size:11px;padding:6px 12px;border-radius:8px;background:var(--bg);color:var(--mu);border:1px solid var(--brd);cursor:pointer;font-family:inherit;font-weight:700;width:70px;">↩ 취소</button>' : '') +
+      '</div>'
 ) +
 
         '</div>';
@@ -1217,37 +1217,51 @@ if (g.total <= 0) {
 }
 
 // ✅ 도장판 혜택 사용 처리
-function usePadReward(sid, rewardLabel) {
+function usePadReward(sid, rewardLabel, action) {
   var s = getShow(sid);
   if (!s) return;
 
-  var available = [];
-
+  var rewardRefs = [];
   (s.pads || []).forEach(function(p) {
     var filled = (p.records || []).length;
-
     (p.rewards || []).forEach(function(r) {
-      if (r.label === rewardLabel && filled >= r.n && !r.used) {
-        available.push(r);
+      if (r.label === rewardLabel && filled >= r.n) {
+        rewardRefs.push(r);
       }
     });
   });
 
-  if (!available.length) {
-    alert('사용 가능한 혜택이 없어요');
-    return;
+  if (!rewardRefs.length) { alert('해당 혜택을 찾을 수 없어요'); return; }
+
+  var totalQty = rewardRefs.reduce(function(sum, r) { return sum + (r.count || 1); }, 0);
+  var usedQty = rewardRefs.reduce(function(sum, r) { return sum + (r.usedCount || 0); }, 0);
+  var remainQty = totalQty - usedQty;
+
+  if (action === 'use') {
+    if (remainQty <= 0) { alert('사용 가능한 장수가 없어요!'); return; }
+    if (!confirm('"' + rewardLabel + '" 1장 사용할까요?\n(남은 장수: ' + remainQty + '장)')) return;
+    for (var i = 0; i < rewardRefs.length; i++) {
+      var r = rewardRefs[i];
+      if ((r.usedCount || 0) < (r.count || 1)) {
+        r.usedCount = (r.usedCount || 0) + 1;
+        break;
+      }
+    }
+    save(); renderB(currentBenefitFilter);
+    alert('✓ 1장 사용 완료! 남은 장수: ' + (remainQty - 1) + '장');
+  } else if (action === 'cancel') {
+    if (usedQty <= 0) { alert('취소할 사용 내역이 없어요!'); return; }
+    if (!confirm('"' + rewardLabel + '" 사용 1장을 취소할까요?\n(현재 ' + usedQty + '장 사용)')) return;
+    for (var j = rewardRefs.length - 1; j >= 0; j--) {
+      if ((rewardRefs[j].usedCount || 0) > 0) {
+        rewardRefs[j].usedCount--;
+        break;
+      }
+    }
+    save(); renderB(currentBenefitFilter);
+    alert('↩ 1장 취소 완료! 남은 장수: ' + (remainQty + 1) + '장');
   }
-
-  available[0].used = true;
-
-  save();
-  renderB(currentBenefitFilter);
-
-  alert(
-    '"' + rewardLabel + '" 사용 완료!\n\n남은 개수: ' + (available.length - 1) + '개'
-  );
 }
-
 // ✅ 수동 입력 혜택 사용 처리
 function useManualBById(id) {
   var b = db.manualB.find(function(x) { return x.id === id; });
