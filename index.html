@@ -393,10 +393,15 @@ emoji-picker { width: 100%; height: 320px; border-radius: 14px; margin-bottom: 1
 </div>
 
 <script>
+function save() {
+  localStorage.setItem('cc6', JSON.stringify(db));
+  if (window._saveToCloud) window._saveToCloud();
+}
+
+
 var COLORS = ['#4a3580','#1a4060','#5c2a10','#1f5040','#5c3a00','#3a1f60','#8b2252'];
 
 var db = JSON.parse(localStorage.getItem('cc6') || 'null') || { shows: [], manualB: [], archived: [] };
-function save() { localStorage.setItem('cc6', JSON.stringify(db)); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 function getShow(id) { return db.shows.find(function(s){ return s.id === id; }); }
 function particle(word, type) {
@@ -1312,13 +1317,125 @@ function toggleBenefitGroup(id) {
 // 초기화
 // ════════════════════════════════════════
 document.getElementById('cal-reg-btn').addEventListener('click', openRecordModal);
-renderHome();
+window._appReady = false;
 initCal();
+setTimeout(function() {
+  if (!window._appReady) renderHome();
+}, 1000);
+
 </script>
 
 <script type="module">
-import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhiyHVOTy7Njy6M5kNxj8-ht7uLInbkw8",
+  authDomain: "redoor-7f5d4.firebaseapp.com",
+  projectId: "redoor-7f5d4",
+  storageBucket: "redoor-7f5d4.firebasestorage.app",
+  messagingSenderId: "130973984591",
+  appId: "1:130973984591:web:8d06573cbf6324c5aec73a"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const firestore = getFirestore(app);
+
+async function saveToCloud(uid) {
+  const data = localStorage.getItem('cc6') || '{}';
+  await setDoc(doc(firestore, 'users', uid), { data });
+}
+async function loadFromCloud(uid, isNewLogin = false) {
+  const snap = await getDoc(doc(firestore, 'users', uid));
+  const local = localStorage.getItem('cc6');
+  const hasLocal = local && JSON.parse(local).shows?.length > 0;
+  const hasCloud = snap.exists();
+
+  if (isNewLogin && hasLocal && hasCloud) {
+    const useCloud = confirm('클라우드 데이터가 있어요!\n\n확인 → 클라우드 불러오기\n취소 → 기존 데이터 유지');
+    if (useCloud) {
+      const data = snap.data().data;
+      localStorage.setItem('cc6', data);
+      db = JSON.parse(data);
+    } else {
+      await saveToCloud(uid);
+    }
+    return;
+  }
+
+  if (isNewLogin && hasLocal && !hasCloud) {
+    await saveToCloud(uid);
+    return;
+  }
+
+  // 자동 복원
+  if (hasCloud) {
+    const data = snap.data().data;
+    localStorage.setItem('cc6', data);
+    db = JSON.parse(data);
+  } else if (hasLocal) {
+    await saveToCloud(uid);
+  }
+}
+
+
+const loginBtn = document.createElement('div');
+loginBtn.style = 'position:absolute;top:16px;right:20px;z-index:999;';
+const homeScreen = document.getElementById('sc-home');
+homeScreen.style.position = 'relative';
+homeScreen.appendChild(loginBtn);
+
+function renderLoginBtn(user) {
+  if (user) {
+    loginBtn.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
+      <img src="${user.photoURL}" style="width:28px;height:28px;border-radius:50%;">
+      <button onclick="window._logout()" style="background:none;border:1px solid var(--brd);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--mu);cursor:pointer;font-family:inherit;">로그아웃</button>
+    </div>`;
+  } else {
+    loginBtn.innerHTML = `<button onclick="window._login()" style="background:var(--navy);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🔑 Google 로그인</button>`;
+  }
+}
+
+window._login = async function() {
+  try {
+    authHandled = true;
+    const result = await signInWithPopup(auth, new GoogleAuthProvider());
+    await loadFromCloud(result.user.uid, true);
+    renderHome();
+  } catch(e) { alert('로그인 실패: ' + e.message); }
+};
+
+
+window._logout = async function() {
+  if (!confirm('로그아웃할까요?')) return;
+  await signOut(auth);
+};
+
+window._saveToCloud = async function() {
+  if (auth.currentUser) {
+    await saveToCloud(auth.currentUser.uid);
+  }
+};
+
+let authHandled = false;
+
+onAuthStateChanged(auth, async function(user) {
+  renderLoginBtn(user);
+  if (user && !authHandled) {
+    authHandled = true;
+    await loadFromCloud(user.uid, false);
+  }
+  window._appReady = true;
+  renderHome();
+  initCal();
+});
+
+
 </script>
+
+
 
 </body>
 </html>
