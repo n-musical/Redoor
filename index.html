@@ -1389,14 +1389,19 @@ homeScreen.appendChild(loginBtn);
 
 function renderLoginBtn(user) {
   if (user) {
-    loginBtn.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
-      <img src="${user.photoURL}" style="width:28px;height:28px;border-radius:50%;">
-      <button onclick="window._logout()" style="background:none;border:1px solid var(--brd);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--mu);cursor:pointer;font-family:inherit;">로그아웃</button>
+    loginBtn.innerHTML = `<div style="position:relative;">
+      <img src="${user.photoURL}" style="width:32px;height:32px;border-radius:50%;cursor:pointer;border:2px solid var(--brd);" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">
+      <div style="display:none;position:absolute;right:0;top:38px;background:#fff;border:1px solid var(--brd);border-radius:12px;padding:8px;min-width:130px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:999;">
+        <div style="font-size:12px;font-weight:700;color:var(--navy);padding:4px 8px 8px;">${user.displayName}</div>
+        <button onclick="window._logout()" style="width:100%;text-align:left;background:none;border:none;padding:8px;font-size:13px;color:var(--mu);cursor:pointer;font-family:inherit;border-radius:8px;">로그아웃</button>
+        <button onclick="window._deleteAccount()" style="width:100%;text-align:left;background:none;border:none;padding:8px;font-size:13px;color:#c0392b;cursor:pointer;font-family:inherit;border-radius:8px;">회원 탈퇴</button>
+      </div>
     </div>`;
   } else {
     loginBtn.innerHTML = `<button onclick="window._login()" style="background:var(--navy);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🔑 Google 로그인</button>`;
   }
 }
+
 
 window._login = async function() {
   try {
@@ -1418,6 +1423,28 @@ window._saveToCloud = async function() {
     await saveToCloud(auth.currentUser.uid);
   }
 };
+
+window._deleteAccount = async function() {
+  if (!confirm('정말 탈퇴할까요?\n모든 데이터가 삭제되며 복구할 수 없어요.')) return;
+  try {
+    const user = auth.currentUser;
+    if (!user) return;
+    const { deleteDoc } = await import("https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js");
+    await deleteDoc(doc(firestore, 'users', user.uid));
+    localStorage.removeItem('cc6');
+    db = { shows: [], manualB: [], archived: [] };
+    await user.delete();
+    alert('탈퇴가 완료됐어요.');
+    renderHome();
+  } catch (e) {
+    if (e.code === 'auth/requires-recent-login') {
+      alert('보안을 위해 재로그인이 필요해요.\n로그아웃 후 다시 로그인하고 탈퇴해주세요.');
+    } else {
+      alert('탈퇴 실패: ' + e.message);
+    }
+  }
+};
+
 
 let authHandled = false;
 
