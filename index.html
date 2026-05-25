@@ -897,9 +897,33 @@ function deleteStampRecord() {
   if (!selectedStampRecord) return;
   var si = selectedStampRecord.si, pi = selectedStampRecord.pi, ri = selectedStampRecord.ri;
   if (!confirm('이 기록을 삭제할까요?')) return;
-  db.shows[si].pads[pi].records.splice(ri, 1);
-  save(); closeModal('m-stamp-detail'); renderHome(); renderShowSc(); renderB('all'); initCal();
+
+  var records = db.shows[si].pads[pi].records;
+  var target = records[ri];
+  var multiCnt = target.multi || 1; // 더블이면 2, 트리플이면 3
+
+  if (multiCnt > 1) {
+    // 같은 날짜 + 같은 시간대 records를 multi 수만큼 한 번에 삭제
+    var removed = 0;
+    db.shows[si].pads[pi].records = records.filter(function(r) {
+      if (removed < multiCnt && r.date === target.date && r.time === target.time) {
+        removed++;
+        return false; // 삭제
+      }
+      return true; // 유지
+    });
+  } else {
+    records.splice(ri, 1);
+  }
+
+  save();
+  closeModal('m-stamp-detail');
+  renderHome();
+  renderShowSc();
+  renderB('all');
+  initCal();
 }
+
 
 function editStampRecord() {
   if (!selectedStampRecord) return;
