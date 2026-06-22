@@ -1002,27 +1002,36 @@ function addRecord() {
   if (!p.records) p.records = [];
   var remaining = p.total - p.records.length;
   var toAdd = Math.min(recordStampCnt, remaining);
+  var overflow = recordStampCnt - toAdd;
+
+  if (overflow > 0) {
+    if (!confirm('현재 도장판이 가득 찼어요.\n새 도장판을 자동 생성할까요?')) {
+      alert('등록이 취소됐어요.');
+      return;
+    }
+  }
+
   for (var i = 0; i < toAdd; i++) {
     p.records.push({ date: date, time: times.rec, price: price, memo: memo, multi: recordStampCnt, calendar: true });
   }
   checkRewards(sid, pi);
-  var overflow = recordStampCnt - toAdd;
+
   if (overflow > 0) {
-    if (confirm('현재 도장판이 가득 찼어요.\n새 도장판을 자동 생성할까요?')) {
-      var newPad = { total: p.total, emoji: p.emoji, rewards: JSON.parse(JSON.stringify(p.rewards)), records: [] };
-      for (var j = 0; j < overflow; j++) {
-        newPad.records.push({ date: date, time: times.rec, price: price, memo: memo, multi: recordStampCnt, calendar: true });
-      }
-      s.pads.push(newPad);
-      checkRewards(sid, s.pads.length - 1);
+    var newPad = { total: p.total, emoji: p.emoji, rewards: JSON.parse(JSON.stringify(p.rewards)), records: [] };
+    for (var j = 0; j < overflow; j++) {
+      newPad.records.push({ date: date, time: times.rec, price: price, memo: memo, multi: recordStampCnt, calendar: true });
     }
+    s.pads.push(newPad);
+    checkRewards(sid, s.pads.length - 1);
   }
+
   save(); closeModal('m-record');
   document.getElementById('r-price').value = '';
   document.getElementById('r-memo').value = '';
   renderHome(); renderShowSc(); renderB('all'); initCal();
   alert('✓ 관람 등록 완료!');
 }
+
 
 // ════════════════════════════════════════
 // 혜택 달성 체크 — 도장판 저장 시 자동 연동
