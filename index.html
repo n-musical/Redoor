@@ -935,6 +935,24 @@ function editStampRecord() {
   save(); openStampRecord(si, pi, ri); renderHome(); renderShowSc(); renderB('all'); initCal();
 }
 
+function editStampRecordFromCal() {
+  if (!selectedStampRecord) return;
+  var si = selectedStampRecord.si, pi = selectedStampRecord.pi, ri = selectedStampRecord.ri;
+  var r = db.shows[si].pads[pi].records[ri];
+  if (!r) return;
+
+  curShow = db.shows[si].id;
+  curPad = pi;
+  editStampIdx = ri;
+
+  document.getElementById('e-date').value = r.date;
+  document.getElementById('e-memo').value = r.memo || '';
+  setTime('edit', r.time || 'day');
+
+  closeModal('m-stamp-detail');
+  openModal('m-edit-stamp');
+}
+
 // ════════════════════════════════════════
 // 관람 등록
 // ════════════════════════════════════════
