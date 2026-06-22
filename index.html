@@ -323,6 +323,12 @@ emoji-picker { width: 100%; height: 320px; border-radius: 14px; margin-bottom: 1
       <button class="tgl on" id="e-day" onclick="setTime('edit','day')">🌤 낮공</button>
       <button class="tgl" id="e-night" onclick="setTime('edit','night')">🌙 밤공</button>
     </div>
+    <label class="lbl">적립 개수</label>
+    <div class="trow" id="edit-cnt-row">
+      <button class="tgl on" onclick="selectEditCnt(this,1)">1개</button>
+      <button class="tgl" onclick="selectEditCnt(this,2)">더블 ×2</button>
+      <button class="tgl" onclick="selectEditCnt(this,3)">트리플 ×3</button>
+    </div>
     <label class="lbl">메모</label>
     <input class="inp" id="e-memo">
     <div class="brow">
@@ -331,6 +337,7 @@ emoji-picker { width: 100%; height: 320px; border-radius: 14px; margin-bottom: 1
     </div>
   </div>
 </div>
+
 
 <!-- 모달: 관람 등록 -->
 <div class="ov" id="m-record">
